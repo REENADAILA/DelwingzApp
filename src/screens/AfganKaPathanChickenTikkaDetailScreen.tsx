@@ -1,6 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { StyleSheet, View, Text, Image, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { CartContext } from '../context/CartContext'; 
+import { WishlistContext } from '../context/WishlistContext'; 
+import dbEngine from '../database/DatabaseEngine';
 
 const { width } = Dimensions.get('window');
 
@@ -42,8 +45,116 @@ const NUTRITION_LIST = [
 ];
 
 export default function AfganKaPathanChickenTikkaScreen({ navigation }: any) {
+  
+  // ─── 🔴 TOP LEVEL HOOKS DECLARATION (NO CONDITIONAL TRAPS) ───
+  const cartContextData = useContext(CartContext);
+  const wishlistContextData = useContext(WishlistContext);
+
   const [selectedSize, setSelectedSize] = useState(0);
+  const [isLiked, setIsLiked] = useState(false);
+
+  // Safe parameters extraction layer
+  const refreshCartFromSQL = cartContextData?.refreshCartFromSQL || null;
+  const refreshWishlistFromSQL = wishlistContextData?.refreshWishlistFromSQL || null;
   const activeOption = SIZE_OPTIONS[selectedSize];
+
+  const productId = 'tk1'; // Unique ID mapping configuration
+  const productName = 'Afghan Ka Pathan Chicken Tikka';
+  const productDesc = 'Boneless chunks marinated deeply in a velvety rich texture of fresh cream, pure cashew paste, and aromatic green cardamoms.';
+
+  // ─── SCAN WISHLIST SCHEMA STATUS ON NAVIGATION FOCUS ───
+  useEffect(() => {
+    const checkWishlistStatus = async () => {
+      try {
+        await dbEngine.initDatabase();
+        const result = await dbEngine.execute("SELECT id FROM wishlist WHERE id = ?;", [productId]);
+        if (result && result.rows && result.rows.length > 0) {
+          setIsLiked(true);
+        } else {
+          setIsLiked(false);
+        }
+      } catch (err) {
+        console.log("Error scanning local wishlist rows for afghani tikka:", err);
+      }
+    };
+
+    const unsubscribe = navigation.addListener('focus', checkWishlistStatus);
+    checkWishlistStatus();
+    return unsubscribe;
+  }, [navigation]);
+
+  // 🛒 ADD TO CART HANDLER
+  const handleAfghaniAddToCart = async () => {
+    try {
+      await dbEngine.initDatabase();
+
+      // Check current presence records inside SQLite row matrix
+      const checkResult = await dbEngine.execute("SELECT qty FROM cart WHERE id = ?;", [productId]);
+
+      if (checkResult && checkResult.rows && checkResult.rows.length > 0) {
+        const currentQty = checkResult.rows.item(0).qty;
+        await dbEngine.execute(
+          "UPDATE cart SET qty = ?, size = ?, price = ? WHERE id = ?;", 
+          [currentQty + 1, activeOption.label, activeOption.price, productId]
+        );
+      } else {
+        await dbEngine.execute(
+          "INSERT INTO cart (id, name, price, size, qty, image, description, rating) VALUES (?, ?, ?, ?, ?, ?, ?, ?);",
+          [
+            productId,
+            productName,
+            activeOption.price,
+            activeOption.label,
+            1,
+            String(require('../assets/image/AfganKaPathanChickenTikka.jpeg')),
+            productDesc,
+            4.8
+          ]
+        );
+      }
+
+      if (refreshCartFromSQL) {
+        refreshCartFromSQL();
+      }
+
+      navigation.navigate('Cart');
+    } catch (error) {
+      console.log("Error inserting afghani tikka layout logs into DB stack layer:", error);
+    }
+  };
+
+  // 💖 SILENT WISHLIST TOGGLE BACKGROUND MACHINE (NO REDIRECTION)
+  const handleAddToWishlist = async () => {
+    try {
+      await dbEngine.initDatabase();
+
+      if (isLiked) {
+        await dbEngine.execute("DELETE FROM wishlist WHERE id = ?;", [productId]);
+        setIsLiked(false);
+      } else {
+        const wishlistProductItem = {
+          id: productId,
+          title: productName,
+          name: productName,
+          price: activeOption.price,
+          mrp: activeOption.mrp,
+          discount: activeOption.discount,
+          selectedVariant: activeOption.label,
+          variants: SIZE_OPTIONS.map(opt => opt.label),
+          image: String(require('../assets/image/AfganKaPathanChickenTikka.jpeg')), 
+        };
+
+        await dbEngine.addToWishlist(wishlistProductItem);
+        setIsLiked(true);
+      }
+
+      if (refreshWishlistFromSQL) {
+        refreshWishlistFromSQL();
+      }
+    } catch (error) {
+      console.log("Error toggling wishlist row for afghani chicken tikka:", error);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -57,7 +168,7 @@ export default function AfganKaPathanChickenTikkaScreen({ navigation }: any) {
         </View>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollPadding}>
+      <ScrollView contentContainerStyle={styles.scrollPadding} showsVerticalScrollIndicator={false}>
         {/* BREADCRUMBS */}
         <View style={styles.breadcrumbRow}>
           <TouchableOpacity onPress={() => navigation.navigate('Home')}>
@@ -75,7 +186,7 @@ export default function AfganKaPathanChickenTikkaScreen({ navigation }: any) {
         {/* BLACK INFO CARD */}
         <View style={styles.infoCard}>
           <View style={styles.titleRow}>
-            <Text style={styles.productTitle}>Afgan Ka Pathan Chicken Tikka</Text>
+            <Text style={styles.productTitle}>{productName}</Text>
           </View>
           
           <View style={styles.descBox}>
@@ -110,15 +221,19 @@ export default function AfganKaPathanChickenTikkaScreen({ navigation }: any) {
             <View style={styles.discountBadge}><Text style={styles.discountText}>{activeOption?.discount}</Text></View>
           </View>
 
-          {/* ACTION BUTTONS */}
+          {/* ACTION BUTTONS WITH BACKGROUND SAFE TOGGLE CONTROLLER WIRE RESOLVED */}
           <View style={styles.actionBtnRow}>
-            <TouchableOpacity style={styles.addToCartBtn}>
+            <TouchableOpacity style={styles.addToCartBtn} activeOpacity={0.8} onPress={handleAfghaniAddToCart}>
               <Icon name="cart-outline" size={20} color="#000" style={{ marginRight: 8 }} />
               <Text style={styles.addToCartText}>Add to Cart</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.wishlistBtn}>
-              <Icon name="heart-outline" size={22} color="#FFF" />
+            <TouchableOpacity style={styles.wishlistBtn} activeOpacity={0.8} onPress={handleAddToWishlist}>
+              <Icon 
+                name={isLiked ? "heart" : "heart-outline"} 
+                size={22} 
+                color={isLiked ? "#EF4444" : "#FFF"} 
+              />
             </TouchableOpacity>
           </View>
 

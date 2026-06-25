@@ -1,6 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { StyleSheet, View, Text, Image, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { CartContext } from '../context/CartContext'; 
+import { WishlistContext } from '../context/WishlistContext'; 
+import dbEngine from '../database/DatabaseEngine';
 
 const { width } = Dimensions.get('window');
 
@@ -42,8 +45,117 @@ const NUTRITION_LIST = [
 ];
 
 export default function TikkaMarinadesDetailScreen({ navigation }: any) {
+  
+  // ─── 🔴 TOP LEVEL HOOK DECLARATIONS (STRICT COMPLIANCE) ───
+  const cartContextData = useContext(CartContext);
+  const wishlistContextData = useContext(WishlistContext);
+
   const [selectedSize, setSelectedSize] = useState(0);
+  const [isLiked, setIsLiked] = useState(false);
+
+  // Safe Parameter Extractions
+  const refreshCartFromSQL = cartContextData?.refreshCartFromSQL || null;
+  const refreshWishlistFromSQL = wishlistContextData?.refreshWishlistFromSQL || null;
   const activeOption = SIZE_OPTIONS[selectedSize];
+
+  const productId = 'tk_detail_main'; 
+  const productName = 'Tikka Marinades';
+  const productDesc = 'Our signature Tikka Marinade features tender boneless meat coated in traditional tandoori spices.';
+
+  // ─── SCAN WISHLIST STATUS ON NAVIGATION FOCUS ───
+  useEffect(() => {
+    const checkWishlistStatus = async () => {
+      try {
+        await dbEngine.initDatabase();
+        const result = await dbEngine.execute("SELECT id FROM wishlist WHERE id = ?;", [productId]);
+        if (result && result.rows && result.rows.length > 0) {
+          setIsLiked(true);
+        } else {
+          setIsLiked(false);
+        }
+      } catch (err) {
+        console.log("Error scanning local wishlist rows for tikka marinades:", err);
+      }
+    };
+
+    const unsubscribe = navigation.addListener('focus', checkWishlistStatus);
+    checkWishlistStatus();
+    return unsubscribe;
+  }, [navigation]);
+
+  // 🛒 CART HANDLER WITH NAVIGATION
+  const handleDetailAddToCart = async () => {
+    try {
+      await dbEngine.initDatabase();
+      const checkResult = await dbEngine.execute("SELECT qty FROM cart WHERE id = ?;", [productId]);
+
+      if (checkResult && checkResult.rows && checkResult.rows.length > 0) {
+        const currentQty = checkResult.rows.item(0).qty;
+        await dbEngine.execute(
+          "UPDATE cart SET qty = ?, size = ?, price = ? WHERE id = ?;", 
+          [currentQty + 1, activeOption.label, activeOption.price, productId]
+        );
+      } else {
+        await dbEngine.execute(
+          "INSERT INTO cart (id, name, price, size, qty, image, description, rating) VALUES (?, ?, ?, ?, ?, ?, ?, ?);",
+          [
+            productId,
+            productName,
+            activeOption.price,
+            activeOption.label,
+            1,
+            String(require('../assets/image/TikkaMarinades.jpeg')),
+            productDesc,
+            4.8
+          ]
+        );
+      }
+
+      if (refreshCartFromSQL) {
+        refreshCartFromSQL();
+      }
+
+      navigation.navigate('Cart');
+    } catch (error) {
+      console.log("Error handling addition tracking data inside detail view context:", error);
+    }
+  };
+
+  // 💖 SILENT BACKGROUND WISHLIST TOGGLE (REDIRECTION REMOVED)
+  const handleAddToWishlist = async () => {
+    try {
+      await dbEngine.initDatabase();
+
+      if (isLiked) {
+        // Silently clear row from SQLite and turn heart back white
+        await dbEngine.execute("DELETE FROM wishlist WHERE id = ?;", [productId]);
+        setIsLiked(false);
+      } else {
+        // Silently insert raw product row payload data and light heart up red
+        const wishlistProductItem = {
+          id: productId,
+          title: productName,
+          name: productName,
+          price: activeOption.price,
+          mrp: activeOption.mrp,
+          discount: activeOption.discount,
+          selectedVariant: activeOption.label,
+          variants: SIZE_OPTIONS.map(opt => opt.label),
+          image: String(require('../assets/image/TikkaMarinades.jpeg')), 
+        };
+
+        await dbEngine.addToWishlist(wishlistProductItem);
+        setIsLiked(true);
+      }
+
+      // Refresh global state context badge counters dynamically
+      if (refreshWishlistFromSQL) {
+        refreshWishlistFromSQL();
+      }
+    } catch (error) {
+      console.log("Error performing silent background toggle on wishlist table:", error);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -57,7 +169,7 @@ export default function TikkaMarinadesDetailScreen({ navigation }: any) {
         </View>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollPadding}>
+      <ScrollView contentContainerStyle={styles.scrollPadding} showsVerticalScrollIndicator={false}>
         {/* BREADCRUMBS */}
         <View style={styles.breadcrumbRow}>
           <TouchableOpacity onPress={() => navigation.navigate('Home')}>
@@ -110,15 +222,19 @@ export default function TikkaMarinadesDetailScreen({ navigation }: any) {
             <View style={styles.discountBadge}><Text style={styles.discountText}>{activeOption?.discount}</Text></View>
           </View>
 
-          {/* ACTION BUTTONS */}
+          {/* ACTION BUTTONS WITH BACKGROUND TOGGLE CALL */}
           <View style={styles.actionBtnRow}>
-            <TouchableOpacity style={styles.addToCartBtn}>
+            <TouchableOpacity style={styles.addToCartBtn} activeOpacity={0.8} onPress={handleDetailAddToCart}>
               <Icon name="cart-outline" size={20} color="#000" style={{ marginRight: 8 }} />
               <Text style={styles.addToCartText}>Add to Cart</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.wishlistBtn}>
-              <Icon name="heart-outline" size={22} color="#FFF" />
+            <TouchableOpacity style={styles.wishlistBtn} activeOpacity={0.8} onPress={handleAddToWishlist}>
+              <Icon 
+                name={isLiked ? "heart" : "heart-outline"} 
+                size={22} 
+                color={isLiked ? "#EF4444" : "#FFF"} 
+              />
             </TouchableOpacity>
           </View>
 

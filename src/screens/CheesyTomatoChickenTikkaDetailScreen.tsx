@@ -8,60 +8,60 @@ import dbEngine from '../database/DatabaseEngine';
 const { width } = Dimensions.get('window');
 
 const SIZE_OPTIONS = [
-  { label: '500g', price: 195, mrp: 220, discount: '11% OFF' },
-  { label: '250g', price: 100, mrp: 115, discount: '13% OFF' },
+  { label: '165g', price: 179, mrp: 199, discount: '10% OFF' },
+  { label: '330g', price: 340, mrp: 380, discount: '10% OFF' },
 ];
 
 const MARKET_CHICKEN_BAD = [
-  'Inaccurate weight — you lose money',
-  'Unpredictable quality per batch',
-  'Dirty & unhygienic handling',
-  'Inconsistent cut & texture',
-  'No temperature control',
+  'Sour chemical tomato paste flavoring',
+  'Low grade synthetic fat oils used',
+  'Unwashed storage environments',
+  'Uneven spice spreads on cubes',
+  'Lacks high barrier safety sealing',
 ];
 
 const DELWINGZ_ADVANTAGE = [
-  'True weight — guaranteed every order',
-  'Predictable, consistent quality',
-  'Hygienically processed & sealed',
-  'Expertly crafted uniform mince',
-  'Temperature-controlled cold chain',
+  'Fresh red vine tomatoes & genuine cheese',
+  'Creamy, buttery italian-indian fusion profile',
+  'Processed under sterile labs & cold maps',
+  'Perfect uniform diced breast fillets',
+  'Intact nitrogen flushed leakproof packs',
 ];
 
 const COOKING_STEPS = [
-  'Thaw under refrigeration — never at room temperature.',
-  'Cook thoroughly before consumption.',
-  'Ensure the internal temperature reaches 74°C.',
-  'Do not refreeze once thawed.',
+  'Defrost the sealed block overnight in the freezer row.',
+  'Preheat your pan or home oven grill to 180°C.',
+  'Sauté over butter for 8-10 mins till cheese blends turn golden.',
+  'Serve fresh with hot mint chutney or lemon slices.',
 ];
 
 const NUTRITION_LIST = [
-  { name: 'PROTEIN', value: '20.5 g' },
-  { name: 'CALORIES', value: '142 kcal' },
-  { name: 'CARBOHYDRATES', value: '0 g' },
-  { name: 'FAT', value: '4.5 g' },
-  { name: 'CHOLESTEROL', value: '95 mg' },
+  { name: 'PROTEIN', value: '22.1 g' },
+  { name: 'CALORIES', value: '185 kcal' },
+  { name: 'CARBOHYDRATES', value: '2.5 g' },
+  { name: 'FAT', value: '9.8 g' },
+  { name: 'CHOLESTEROL', value: '84 mg' },
 ];
 
-export default function RawChickenKeemaDetailScreen({ navigation }: any) {
+export default function CheesyTomatoTikkaDetailScreen({ navigation }: any) {
   
-  // ─── HOOKS LOADED AT TOP LEVEL IN STRICT COMPLIANCE ───
+  // ─── 🔴 TOP LEVEL HOOK DECLARATIONS (STRICT ORDER FIXED) ───
   const cartContextData = useContext(CartContext);
   const wishlistContextData = useContext(WishlistContext);
 
   const [selectedSize, setSelectedSize] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
 
-  // Safe Extraction Layers
+  // Safe Parameter Extractions
   const refreshCartFromSQL = cartContextData?.refreshCartFromSQL || null;
   const refreshWishlistFromSQL = wishlistContextData?.refreshWishlistFromSQL || null;
   const activeOption = SIZE_OPTIONS[selectedSize];
 
-  const productId = 'rc1'; 
-  const productName = 'Raw Chicken Keema';
-  const productDesc = 'Our Raw Chicken Keema is expertly crafted, finely minced uniform meat sourced from premium tender cuts.';
+  const productId = 'gm2'; 
+  const productName = 'Cheesy Tomato Chicken Tikka';
+  const productDesc = 'A marvelous creamy blend packed with smooth premium melted cheese, rich tangy tomato reduction layers and soft roasted chicken tikka cubes.';
 
-  // ─── SCAN WISHLIST STATUS ON SCREEN FOCUS ───
+  // ─── SCAN WISHLIST STATUS ON NAVIGATION FOCUS ───
   useEffect(() => {
     const checkWishlistStatus = async () => {
       try {
@@ -73,18 +73,17 @@ export default function RawChickenKeemaDetailScreen({ navigation }: any) {
           setIsLiked(false);
         }
       } catch (err) {
-        console.log("Error scanning local wishlist rows:", err);
+        console.log("Error scanning local wishlist rows for cheesy tomato tikka:", err);
       }
     };
 
     const unsubscribe = navigation.addListener('focus', checkWishlistStatus);
     checkWishlistStatus();
-    
     return unsubscribe;
   }, [navigation]);
 
-  // 🛒 ADD TO CART HANDLER WITH AUTO NAVIGATION
-  const handleKeemaAddToCart = async () => {
+  // 🛒 CART HANDLER WITH RE-ROUTE STRIP
+  const handleCheesyDetailAddToCart = async () => {
     try {
       await dbEngine.initDatabase();
       const checkResult = await dbEngine.execute("SELECT qty FROM cart WHERE id = ?;", [productId]);
@@ -104,7 +103,7 @@ export default function RawChickenKeemaDetailScreen({ navigation }: any) {
             activeOption.price,
             activeOption.label,
             1,
-            String(require('../assets/image/RawChickenKima.jpeg')),
+            String(require('../assets/image/KeralaCoconutCurryChickenGravy.jpeg')),
             productDesc,
             4.8
           ]
@@ -117,21 +116,21 @@ export default function RawChickenKeemaDetailScreen({ navigation }: any) {
 
       navigation.navigate('Cart');
     } catch (error) {
-      console.log("Error inserting data into details layout handler context:", error);
+      console.log("Error processing cheesy detail write transactions to DB context:", error);
     }
   };
 
-  // 💖 SILENT ADD/REMOVE WISHLIST TOGGLE (REDIRECTION REMOVED)
-  const handleKeemaAddToWishlist = async () => {
+  // 💖 SILENT BACKGROUND WISHLIST TOGGLE (REDIRECTION SAFELY REMOVED)
+  const handleAddToWishlist = async () => {
     try {
       await dbEngine.initDatabase();
 
       if (isLiked) {
-        // If already saved, remove it silently and toggle icon color back
+        // Silently clear row from SQLite and turn heart back white
         await dbEngine.execute("DELETE FROM wishlist WHERE id = ?;", [productId]);
         setIsLiked(false);
       } else {
-        // If not saved, store it inside SQLite silently and light up the heart icon red
+        // Silently insert raw product row payload data and light heart up red
         const wishlistProductItem = {
           id: productId,
           title: productName,
@@ -141,19 +140,19 @@ export default function RawChickenKeemaDetailScreen({ navigation }: any) {
           discount: activeOption.discount,
           selectedVariant: activeOption.label,
           variants: SIZE_OPTIONS.map(opt => opt.label),
-          image: String(require('../assets/image/RawChickenKima.jpeg')), 
+          image: String(require('../assets/image/KeralaCoconutCurryChickenGravy.jpeg')), 
         };
 
         await dbEngine.addToWishlist(wishlistProductItem);
         setIsLiked(true);
       }
 
-      // Sync the global tab bar or badge count metrics silently
+      // Refresh global state context badge counters dynamically
       if (refreshWishlistFromSQL) {
         refreshWishlistFromSQL();
       }
     } catch (error) {
-      console.log("Error toggling wishlist row processing:", error);
+      console.log("Error performing silent background toggle on wishlist table:", error);
     }
   };
 
@@ -169,33 +168,30 @@ export default function RawChickenKeemaDetailScreen({ navigation }: any) {
         </View>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollPadding} showsVerticalScrollIndicator={false}>
-        {/* BREADCRUMBS */}
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollPadding}>
+        {/* BREADCRUMB ROW */}
         <View style={styles.breadcrumbRow}>
           <TouchableOpacity onPress={() => navigation.navigate('Home')}>
             <Text style={styles.breadText}>Home </Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => navigation.navigate('RawChicken')}>
-            <Text style={styles.breadText}> ›  Raw Chicken  ›  </Text>
+          <TouchableOpacity onPress={() => navigation.navigate('Categories')}>
+            <Text style={styles.breadText}> ›  Gravy Marinades  ›  </Text>
           </TouchableOpacity>
-          <Text style={styles.breadActive}>Raw Chicken Keema</Text>
+          <Text style={styles.breadActive}>Cheesy Tomato</Text>
         </View>
 
-        {/* MAIN PRODUCT IMAGE */}
-        <Image source={require('../assets/image/RawChickenKima.jpeg')} style={styles.mainProductImage} />
+        <Image source={require('../assets/image/KeralaCoconutCurryChickenGravy.jpeg')} style={styles.mainProductImage} />
 
-        {/* BLACK INFO CARD */}
+        {/* INFO BLACK CARD BLOCK */}
         <View style={styles.infoCard}>
           <View style={styles.titleRow}>
-            <Text style={styles.productTitle}>Raw Chicken Keema</Text>
+            <Text style={styles.productTitle}>Cheesy Tomato Chicken Tikka</Text>
           </View>
           
           <View style={styles.descBox}>
-            <Text style={styles.descText} numberOfLines={3}>
-              Our Raw Chicken Keema is expertly crafted, finely minced uniform meat sourced from premium tender cuts.
-              Perfect for making juicy kebabs, keema parathas, and rich curries.
+            <Text style={styles.descText}>
+              A marvelous creamy blend packed with smooth premium melted cheese, rich tangy tomato reduction layers and soft roasted chicken tikka cubes. Kids and family favorite!
             </Text>
-            <TouchableOpacity><Text style={styles.readMoreText}>READ MORE ↓</Text></TouchableOpacity>
           </View>
 
           <Text style={styles.sectionLabel}>SELECT SIZE</Text>
@@ -216,21 +212,20 @@ export default function RawChickenKeemaDetailScreen({ navigation }: any) {
             })}
           </View>
 
-          {/* PRICE ROW */}
           <View style={styles.mainPriceRow}>
             <Text style={styles.boldPriceText}>₹{activeOption?.price}</Text>
             <Text style={styles.mrpText}>MRP: ₹{activeOption?.mrp}</Text>
             <View style={styles.discountBadge}><Text style={styles.discountText}>{activeOption?.discount}</Text></View>
           </View>
 
-          {/* ACTION BUTTONS */}
+          {/* ACTION ROW BUTTONS */}
           <View style={styles.actionBtnRow}>
-            <TouchableOpacity style={styles.addToCartBtn} activeOpacity={0.8} onPress={handleKeemaAddToCart}>
+            <TouchableOpacity style={styles.addToCartBtn} activeOpacity={0.8} onPress={handleCheesyDetailAddToCart}>
               <Icon name="cart-outline" size={20} color="#000" style={{ marginRight: 8 }} />
               <Text style={styles.addToCartText}>Add to Cart</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.wishlistBtn} activeOpacity={0.8} onPress={handleKeemaAddToWishlist}>
+            <TouchableOpacity style={styles.wishlistBtn} activeOpacity={0.8} onPress={handleAddToWishlist}>
               <Icon 
                 name={isLiked ? "heart" : "heart-outline"} 
                 size={22} 
@@ -245,14 +240,13 @@ export default function RawChickenKeemaDetailScreen({ navigation }: any) {
           </TouchableOpacity>
         </View>
 
-        {/* WHY DELWINGZ */}
+        {/* ADVANTAGE BLOCK */}
         <Text style={styles.whyTitle}>Why Delwingz?</Text>
         
-        {/* MARKET CHICKEN BAD CARDS */}
         <View style={styles.whiteCardContainer}>
           <View style={styles.cardHeaderRow}>
             <Icon name="store" size={20} color="#B31942" />
-            <Text style={styles.cardHeaderTitle}>Market Chicken</Text>
+            <Text style={styles.cardHeaderTitle}>Market Alternates</Text>
           </View>
           {MARKET_CHICKEN_BAD.map((text, i) => (
             <View key={i} style={styles.bulletRow}>
@@ -262,7 +256,6 @@ export default function RawChickenKeemaDetailScreen({ navigation }: any) {
           ))}
         </View>
 
-        {/* DELWINGZ ADVANTAGE GOOD CARDS */}
         <View style={[styles.whiteCardContainer, { backgroundColor: '#FFF0F2', borderColor: '#FFE4E6' }]}>
           <View style={styles.cardHeaderRow}>
             <Icon name="shield-check" size={20} color="#B31942" />
@@ -276,10 +269,9 @@ export default function RawChickenKeemaDetailScreen({ navigation }: any) {
           ))}
         </View>
 
-        {/* COOKING & NUTRITION SECTION */}
+        {/* COOKING & NUTRITION */}
         <Text style={styles.whyTitle}>Cooking & Nutrition</Text>
         
-        {/* HOW TO COOK */}
         <View style={styles.burgundyCard}>
           <View style={styles.burgundyHeader}>
             <Text style={styles.burgundyTag}>PREPARATION GUIDE</Text>
@@ -295,7 +287,6 @@ export default function RawChickenKeemaDetailScreen({ navigation }: any) {
           </View>
         </View>
 
-        {/* NUTRITIONAL VALUES */}
         <View style={styles.burgundyCard}>
           <View style={styles.burgundyHeader}>
             <Text style={styles.burgundyTag}>PER 100G • APPROX.</Text>
@@ -310,7 +301,6 @@ export default function RawChickenKeemaDetailScreen({ navigation }: any) {
             ))}
           </View>
         </View>
-
       </ScrollView>
     </View>
   );
@@ -318,23 +308,22 @@ export default function RawChickenKeemaDetailScreen({ navigation }: any) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#FFF' },
-  scrollPadding: { paddingBottom: 50 },
+  scrollPadding: { paddingBottom: 40 },
   appHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingTop: 50, paddingBottom: 15, backgroundColor: '#FFF', borderBottomWidth: 1, borderColor: '#EEE' },
   brandLogo: { fontSize: 22, fontWeight: 'bold', color: '#B31942', fontStyle: 'italic' },
   headerRightIcons: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   toggleContainer: { backgroundColor: '#FFF0F2', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 20, borderWidth: 1, borderColor: '#FFE4E6' },
   toggleText: { fontSize: 12, fontWeight: '700', color: '#B31942' },
   iconBtn: { padding: 4 },
-  breadcrumbRow: { flexDirection: 'row', paddingHorizontal: 16, marginTop: 12 },
+  breadcrumbRow: { flexDirection: 'row', paddingHorizontal: 16, marginTop: 12, flexWrap: 'wrap' },
   breadText: { color: '#718096', fontSize: 12 },
   breadActive: { color: '#B31942', fontSize: 12, fontWeight: 'bold' },
   mainProductImage: { width: width, height: 260, resizeMode: 'cover', marginTop: 10 },
   infoCard: { backgroundColor: '#111', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, marginTop: -20 },
   titleRow: { flexDirection: 'column', alignItems: 'flex-start' },
-  productTitle: { color: '#FFF', fontSize: 22, fontWeight: 'bold' },
+  productTitle: { color: '#FFF', fontSize: 20, fontWeight: 'bold' },
   descBox: { backgroundColor: '#222', padding: 12, borderRadius: 12, marginTop: 15 },
   descText: { color: '#AAA', fontSize: 13, lineHeight: 18 },
-  readMoreText: { color: '#B71C1C', fontWeight: 'bold', fontSize: 11, marginTop: 5 },
   sectionLabel: { color: '#718096', fontSize: 11, fontWeight: 'bold', letterSpacing: 0.8, marginTop: 20, marginBottom: 10 },
   sizeGrid: { flexDirection: 'row', gap: 12 },
   sizeBox: { flex: 1, borderRadius: 12, padding: 12, borderWidth: 1, alignItems: 'center' },

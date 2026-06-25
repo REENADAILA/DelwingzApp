@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { StyleSheet, View, Text, ScrollView, Image, TouchableOpacity, useWindowDimensions } from 'react-native';
+import { StyleSheet, View, Text, ScrollView, Image, TouchableOpacity, TextInput } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { CartContext } from '../context/CartContext'; 
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -8,11 +8,19 @@ import dbEngine from '../database/DatabaseEngine';
 export default function CartScreen() {
   const navigation = useNavigation<any>();
   const { refreshCartFromSQL } = useContext(CartContext) || {};
-  const { width } = useWindowDimensions();
 
   const [cartItems, setCartItems] = useState<any[]>([]);
-  const [showTaxBreakup, setShowTaxBreakup] = useState(false);
-  const [gstinChecked, setGstinChecked] = useState(false);
+  const [showTaxBreakup, setShowTaxBreakup] = useState<boolean>(false);
+  const [gstinChecked, setGstinChecked] = useState<boolean>(false);
+  const [useWalletChecked, setUseWalletChecked] = useState<boolean>(false);
+
+  // Address entry state
+  const [addressInput, setAddressInput] = useState<string>("");
+
+  // Delivery Slots setup
+  const slotsList = ["Morning (7AM - 10AM)", "Noon (1PM - 3PM)", "Evening (6PM - 9PM)"];
+  const [selectedSlot, setSelectedSlot] = useState<string>("Noon (1PM - 3PM)");
+  const [showSlotDropdown, setShowSlotDropdown] = useState<boolean>(false);
 
   // 🔄 FETCH REAL TIME DYNAMIC PRODUCTS FROM SQLite
   const fetchCartItems = async () => {
@@ -98,14 +106,6 @@ export default function CartScreen() {
 
   return (
     <View style={styles.container}>
-      
-      {/* 🟢 TOP ALERT TOAST STRIP */}
-      {cartItems.length > 0 && (
-        <View style={styles.greenToastAlert}>
-          <Icon name="check-circle" size={18} color="#15803D" style={{ marginRight: 8 }} />
-          <Text style={styles.toastAlertText}>Product added to cart</Text>
-        </View>
-      )}
 
       {/* RENDER EMPTY STATE OR ACTIVE DYNAMIC LIST */}
       {cartItems.length === 0 ? (
@@ -134,11 +134,8 @@ export default function CartScreen() {
           </View>
         </View>
       ) : (
-        <>
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollPadding}>
-            
-            {/* HEADER COMPONENT INSIDE SCROLL SHEET */}
-            <View style={styles.cartHeaderBarStatic}>
+ <>
+ <View style={styles.cartHeaderBarStatic}>
               <View style={styles.headerLeftTitleRow}>
                 <View style={styles.cartIconBadge}>
                   <Icon name="cart" size={16} color="#FFF" />
@@ -149,6 +146,10 @@ export default function CartScreen() {
                 <Icon name="close" size={22} color="#64748B" />
               </TouchableOpacity>
             </View>
+          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollPadding}>
+            
+            {/* HEADER COMPONENT INSIDE SCROLL SHEET */}
+            
 
             <Text style={styles.sectionLabelTitle}>RETAIL ITEMS</Text>
 
@@ -183,50 +184,93 @@ export default function CartScreen() {
                     <Text style={styles.bulkPricingAlert}>Add 9.75 kg more to unlock bulk pricing</Text>
                     
                     <View style={styles.variantInlineRow}>
-                      <Text style={styles.variantLabel}>Variant:</Text>
-                      <TouchableOpacity style={styles.variantDropdown}>
-                        <Text style={styles.variantValueText}>{item.size}</Text>
-                        <Icon name="chevron-down" size={14} color="#4A5568" />
-                      </TouchableOpacity>
+                      {/* Left Column: Variant Selection */}
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                        <Text style={styles.variantLabel}>Variant:</Text>
+                        <TouchableOpacity style={styles.variantDropdown}>
+                          <Text style={styles.variantValueText}>{item.size}</Text>
+                          <Icon name="chevron-down" size={14} color="#4A5568" />
+                        </TouchableOpacity>
+                      </View>
+
+                      {/* Right Column: Counter Control Box */}
+                      <View style={styles.counterActionContainer}>
+                        <TouchableOpacity style={styles.counterBtn} onPress={() => updateQuantity(item.id, 'decrease')}>
+                          <Icon name="minus" size={14} color="#1E293B" />
+                        </TouchableOpacity>
+                        <Text style={styles.counterValueText}>{item.qty}</Text>
+                        <TouchableOpacity style={styles.counterBtn} onPress={() => updateQuantity(item.id, 'increase')}>
+                          <Icon name="plus" size={14} color="#1E293B" />
+                        </TouchableOpacity>
+                      </View>
                     </View>
                   </View>
-                </View>
-
-                {/* Counter controls row aligning right to card bottom */}
-                <View style={styles.counterActionContainer}>
-                  <TouchableOpacity style={styles.counterBtn} onPress={() => updateQuantity(item.id, 'decrease')}>
-                    <Icon name="minus" size={16} color="#1E293B" />
-                  </TouchableOpacity>
-                  <Text style={styles.counterValueText}>{item.qty}</Text>
-                  <TouchableOpacity style={styles.counterBtn} onPress={() => updateQuantity(item.id, 'increase')}>
-                    <Icon name="plus" size={16} color="#1E293B" />
-                  </TouchableOpacity>
                 </View>
               </View>
             ))}
 
-            {/* STATIC PREMIUM CONFIGURATION DETAILS LAYER CARD */}
+            {/* ADDRESS INPUT FIELD AND ACTIVE SLOT DROPDOWN */}
             <View style={styles.whiteCardBlock}>
               <View style={styles.blockTitleRow}>
                 <Icon name="map-marker" size={20} color="#EF4444" style={{ marginRight: 6 }} />
                 <Text style={styles.blockHeadingTitle}>Delivery Address</Text>
               </View>
               
-              <View style={styles.loginBannerCard}>
-                <Text style={styles.loginBannerTxt}>Please login or sign up to add a delivery address.</Text>
-                <TouchableOpacity style={styles.loginInlineBtn}>
-                  <Text style={styles.loginInlineBtnTxt}>Login / Sign Up</Text>
-                </TouchableOpacity>
+              {/* Text Input Area for Entering Address */}
+              <View style={styles.addressInputContainer}>
+                <TextInput
+                  style={styles.addressInputField}
+                  placeholder="Enter your delivery address here..."
+                  placeholderTextColor="#A0AEC0"
+                  value={addressInput}
+                  onChangeText={setAddressInput}
+                  multiline={true}
+                />
               </View>
 
               <View style={[styles.blockTitleRow, { marginTop: 15 }]}>
                 <Icon name="clock-outline" size={20} color="#0EA5E9" style={{ marginRight: 6 }} />
                 <Text style={styles.blockHeadingTitle}>Delivery Slot</Text>
               </View>
-              <Text style={styles.noSlotsText}>No slots available</Text>
+              
+              {/* Slot selector field */}
+              <TouchableOpacity 
+                style={styles.addressSelectorDropdown}
+                onPress={() => setShowSlotDropdown(!showSlotDropdown)}
+              >
+                <Text style={styles.addressDropdownTxt}>{selectedSlot}</Text>
+                <Icon name={showSlotDropdown ? "chevron-up" : "chevron-down"} size={20} color="#4A5568" />
+              </TouchableOpacity>
+
+              {/* Collapsible Slots selection list */}
+              {showSlotDropdown && (
+                <View style={styles.slotsDropdownMenuContainer}>
+                  {slotsList.map((slot, index) => (
+                    <TouchableOpacity 
+                      key={index} 
+                      style={[
+                        styles.slotItemRow, 
+                        selectedSlot === slot && styles.slotItemActive
+                      ]}
+                      onPress={() => {
+                        setSelectedSlot(slot);
+                        setShowSlotDropdown(false);
+                      }}
+                    >
+                      <Text style={[
+                        styles.slotItemTxt, 
+                        selectedSlot === slot && styles.slotItemActiveTxt
+                      ]}>
+                        {slot}
+                      </Text>
+                      {selectedSlot === slot && <Icon name="check" size={16} color="#800A26" />}
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
             </View>
 
-            {/* GSTIN CHECKBOX INLINE CONTAINER */}
+            {/* GSTIN INLINE ROW */}
             <View style={styles.gstCheckboxRow}>
               <Text style={styles.gstLabelTxt}>GSTIN</Text>
               <TouchableOpacity 
@@ -237,7 +281,21 @@ export default function CartScreen() {
               </TouchableOpacity>
             </View>
 
-            {/* COLLAPSIBLE PRICING CONTEXT BOX */}
+            {/* USE WALLET BALANCE INLINE ROW */}
+            <View style={styles.walletCheckboxRow}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <TouchableOpacity 
+                  style={[styles.checkboxBox, useWalletChecked && styles.checkboxChecked]} 
+                  onPress={() => setUseWalletChecked(!useWalletChecked)}
+                >
+                  {useWalletChecked && <Icon name="check" size={12} color="#FFF" />}
+                </TouchableOpacity>
+                <Text style={styles.walletLabelTxt}>Use Wallet Balance</Text>
+              </View>
+              <Text style={styles.walletBalanceBold}>₹50.00</Text>
+            </View>
+
+            {/* TAX BREAKDOWN DETAILS CONTAINER */}
             <View style={styles.whiteCardBlock}>
               <View style={styles.taxSummaryHeaderRow}>
                 <View>
@@ -281,7 +339,7 @@ export default function CartScreen() {
 
           </ScrollView>
 
-          {/* OVERLAY STICKY BOTTOM ACTION FOOTER SUMMARY ELEMENT */}
+          {/* OVERLAY STICKY BOTTOM ACTIONS FOOTER */}
           <View style={styles.stickyFooterAmountBar}>
             <View style={styles.footerSummaryTextRow}>
               <Text style={styles.footerAmountLabel}>Total Amount</Text>
@@ -297,7 +355,7 @@ export default function CartScreen() {
                 navigation.navigate('Buy');
               }}
             >
-              <Text style={styles.proceedCheckoutBtnTxt}>Login to Proceed</Text>
+              <Text style={styles.proceedCheckoutBtnTxt}>Proceed to Checkout</Text>
             </TouchableOpacity>
           </View>
         </>
@@ -307,13 +365,10 @@ export default function CartScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FFF5F6' },
+  container: { flex: 1, backgroundColor: '#FFF5F6', paddingTop: 20 },
   scrollPadding: { paddingHorizontal: 16, paddingBottom: 130, paddingTop: 10 },
-  
-  greenToastAlert: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#E8F5E9', paddingVertical: 10, paddingHorizontal: 16, marginHorizontal: 16, marginTop: 50, borderRadius: 8, borderWidth: 1, borderColor: '#C8E6C9' },
-  toastAlertText: { color: '#2E7D32', fontWeight: '600', fontSize: 14 },
 
-  cartHeaderBarStatic: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 15, borderBottomWidth: 1, borderColor: '#FFE4E6', backgroundColor: '#FFF5F6', marginBottom: 10 },
+  cartHeaderBarStatic: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 15,paddingHorizontal: 20, borderBottomWidth: 1, borderColor: '#FFE4E6', backgroundColor: '#FFF5F6', marginBottom: 10, marginTop: 40,paddingTop:0, },
   headerLeftTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   cartIconBadge: { backgroundColor: '#800A26', width: 30, height: 30, borderRadius: 6, justifyContent: 'center', alignItems: 'center' },
   cartHeaderTitle: { fontSize: 19, fontWeight: '800', color: '#800A26' },
@@ -339,26 +394,36 @@ const styles = StyleSheet.create({
   discountBadgeText: { fontSize: 12, fontWeight: '700', color: '#38A169' },
   bulkPricingAlert: { fontSize: 12, fontWeight: '600', color: '#D69E2E', marginTop: 4 },
   
-  variantInlineRow: { flexDirection: 'row', alignItems: 'center', marginTop: 8, gap: 6 },
+  variantInlineRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 12, width: '100%' },
   variantLabel: { fontSize: 13, color: '#718096' },
   variantDropdown: { flexDirection: 'row', alignItems: 'center', gap: 4, borderWidth: 1, borderColor: '#FFE4E6', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 8, backgroundColor: '#FFF' },
   variantValueText: { fontSize: 13, fontWeight: '600', color: '#2D3748' },
 
-  counterActionContainer: { flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', gap: 16, marginTop: -20 },
-  counterBtn: { backgroundColor: '#EDF2F7', width: 30, height: 30, borderRadius: 6, justifyContent: 'center', alignItems: 'center' },
-  counterValueText: { fontSize: 14, fontWeight: '700', color: '#1A202C' },
+  counterActionContainer: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: '#EDF2F7', borderRadius: 8, height: 30, paddingLeft: 6 },
+  counterBtn: { width: 13, height: 26, justifyContent: 'center', alignItems: 'center' },
+  counterValueText: { fontSize: 13, fontWeight: '700', color: '#1A202C', minWidth: 16, textAlign: 'center' },
 
   whiteCardBlock: { backgroundColor: '#FFF', borderRadius: 20, padding: 16, borderWidth: 1, borderColor: '#FFE4E6', marginBottom: 15 },
   blockTitleRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
-  blockHeadingTitle: { fontSize: 14, fontWeight: '700', color: '#2D3748', marginLeft: 2 },
-  loginBannerCard: { backgroundColor: '#FFFDF0', borderWidth: 1, borderColor: '#FEF08A', borderRadius: 12, padding: 14 },
-  loginBannerTxt: { fontSize: 13, color: '#744210', fontWeight: '600', lineHeight: 18, marginBottom: 12 },
-  loginInlineBtn: { backgroundColor: '#1A202C', paddingVertical: 8, paddingHorizontal: 14, borderRadius: 6, alignSelf: 'flex-start' },
-  loginInlineBtnTxt: { color: '#FFF', fontSize: 12, fontWeight: '700' },
-  noSlotsText: { fontSize: 13, color: '#9B2C2C', fontWeight: '600', marginLeft: 4 },
+  blockHeadingTitle: { fontSize: 15, fontWeight: '700', color: '#1A202C', marginLeft: 2 },
+  
+  addressInputContainer: { borderWidth: 1, borderColor: '#FFE4E6', borderRadius: 12, backgroundColor: '#FFF', marginBottom: 5, paddingHorizontal: 12, paddingVertical: 4 },
+  addressInputField: { fontSize: 14, color: '#1A202C', fontWeight: '500', minHeight: 45, textAlignVertical: 'top' },
+  
+  addressSelectorDropdown: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderWidth: 1, borderColor: '#FFE4E6', paddingHorizontal: 14, paddingVertical: 12, borderRadius: 12, backgroundColor: '#FFF', marginBottom: 5 },
+  addressDropdownTxt: { fontSize: 14, color: '#1A202C', fontWeight: '500', flex: 1 },
 
-  gstCheckboxRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 4, marginBottom: 15 },
-  gstLabelTxt: { fontSize: 14, fontWeight: '700', color: '#2D3748' },
+  slotsDropdownMenuContainer: { backgroundColor: '#FFF', borderWidth: 1, borderColor: '#FFE4E6', borderRadius: 12, paddingVertical: 4, marginTop: 4 },
+  slotItemRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 12, paddingHorizontal: 14, borderBottomWidth: 0.5, borderColor: '#EDF2F7' },
+  slotItemActive: { backgroundColor: '#FFF5F6' },
+  slotItemTxt: { fontSize: 14, color: '#4A5568', fontWeight: '500' },
+  slotItemActiveTxt: { color: '#800A26', fontWeight: '700' },
+
+  gstCheckboxRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 4, marginBottom: 15, marginTop: 5 },
+  walletCheckboxRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 4, marginBottom: 20, borderTopWidth: 1, borderBottomWidth: 1, borderColor: '#EDF2F7', paddingVertical: 16 },
+  gstLabelTxt: { fontSize: 15, fontWeight: '700', color: '#2D3748' },
+  walletLabelTxt: { fontSize: 15, fontWeight: '600', color: '#2D3748' },
+  walletBalanceBold: { fontSize: 15, fontWeight: '700', color: '#1A202C' },
   checkboxBox: { width: 18, height: 18, borderWidth: 1.5, borderColor: '#A0AEC0', borderRadius: 4, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FFF' },
   checkboxChecked: { backgroundColor: '#800A26', borderColor: '#800A26' },
 
