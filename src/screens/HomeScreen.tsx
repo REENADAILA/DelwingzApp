@@ -1,7 +1,11 @@
-import React, { useState } from 'react';
-import { StyleSheet, View, Text, Image, TouchableOpacity, ScrollView, Dimensions, Switch } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import React from 'react';
+import { StyleSheet, View, Text, Image, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
+import { TopNavBar } from '../components/TopNavBar';
+import { BottomTabBar } from '../components/BottomTabBar';
+import { useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { styles } from '../styles/HomeScreenStyle';
 
 const { width } = Dimensions.get('window');
 
@@ -32,6 +36,8 @@ export default function HomeScreen() {
   const navigation = useNavigation<any>();
   const [isBulkOrder, setIsBulkOrder] = useState(false);
 
+  const [isBulkOrder, setIsBulkOrder] = useState(false);
+
   const openCategories = () => navigation.navigate('Categories');
   const openProfile = () => navigation.navigate('Profile');
 
@@ -42,28 +48,14 @@ export default function HomeScreen() {
       <View style={styles.stickyHeaderCard}>
         <Text style={styles.brandTextLogo}>Delwingz</Text>
         
-        <View style={styles.headerRightActions}>
-          {/* Bulk Order Toggle with Switch on Left */}
-          <View style={styles.toggleContainer}>
-            <Switch
-              trackColor={{ false: '#CBD5E1', true: '#B31942' }}
-              thumbColor={isBulkOrder ? '#FFF' : '#f4f3f4'}
-              ios_backgroundColor="#3e3e3e"
-              onValueChange={(value) => setIsBulkOrder(value)}
-              value={isBulkOrder}
-              style={styles.switchStyle}
-            />
-            <Text style={styles.toggleText}>Bulk Order</Text>
-          </View>
-          
-          <TouchableOpacity style={styles.headerIconCircleHitbox}>
-            <Icon name="magnify" size={22} color="#800A26" />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.headerIconCircleHitbox} onPress={openProfile}>
-            <Icon name="menu" size={24} color="#800A26" />
-          </TouchableOpacity>
-        </View>
-      </View>
+        <View style={styles.heroSection}>
+          <TopNavBar 
+            title=""
+              isBulkOrder={isBulkOrder}
+              onToggleBulkOrder={() => setIsBulkOrder(!isBulkOrder)}
+              onSearchPress={() => console.log('Search Clicked')}
+              onMenuPress={openProfile}
+          />
 
       {/* MAIN SCROLLABLE BODY */}
       <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
@@ -159,100 +151,7 @@ export default function HomeScreen() {
         </View>
       </ScrollView>
 
-      {/* EXACT UNCHANGED BOTTOM TAB BAR COMPONENT */}
-      <View style={styles.bottomTabBar}>
-        <TouchableOpacity style={styles.tabItem} onPress={() => navigation.navigate('Home')}>
-          <Icon name="home" size={22} color="#B31942" />
-          <Text style={styles.activeTabLabel}>Home</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.tabItem} onPress={() => navigation.navigate('Categories')}>
-          <Icon name="grid" size={22} color="#718096" />
-          <Text style={styles.tabLabel}>Categories</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.tabItem} onPress={() => navigation.navigate('Survey')}>
-          <Icon name="clipboard-text" size={22} color="#718096" />
-          <Text style={styles.tabLabel}>Survey</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.tabItem} onPress={() => navigation.navigate('Subscription')}>
-          <Icon name="calendar-month-outline" size={22} color="#718096" />
-          <Text style={styles.tabLabel}>Subscription</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.tabItem} onPress={() => navigation.navigate('Cart')}>
-          <Icon name="cart-outline" size={22} color="#718096" />
-          <Text style={styles.tabLabel}>Cart</Text>
-        </TouchableOpacity>
-      </View>
-
+      <BottomTabBar navigation={navigation} activeTab="Home" />
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FFF',paddingTop:0, },
-  
-  // ─── 🔴 UNIQUE STICKY HEADER CARD WITH DIFFERENT COLOR TONE ───
-  stickyHeaderCard: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, height: 56, backgroundColor: '#FFF0F2', borderBottomWidth: 1, borderColor: '#FFE4E6', marginTop: 40,paddingTop:0, },
-  brandTextLogo: { fontSize: 24, fontWeight: 'bold', color: '#B31942', fontStyle: 'italic', letterSpacing: -0.5 },
-  headerRightActions: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  
-  // Custom switch layout alignment to the left
-  toggleContainer: { backgroundColor: '#FFF', borderRadius: 20, paddingLeft: 4, paddingRight: 12, height: 32, flexDirection: 'row', alignItems: 'center', gap: 2, borderWidth: 1, borderColor: '#FFE4E6' },
-  toggleText: { fontSize: 12, fontWeight: '700', color: '#B31942' },
-  switchStyle: { transform: [{ scaleX: 0.75 }, { scaleY: 0.75 }] },
-  headerIconCircleHitbox: { width: 34, height: 34, justifyContent: 'center', alignItems: 'center' },
-  
-  // Hero Banner base setups
-  heroSection: { backgroundColor: '#C8162B', paddingBottom: 40, paddingTop: 24, position: 'relative' },
-  centerItems: { alignItems: 'center', zIndex: 2 },
-  orangeOfferBadge: { backgroundColor: '#FF9E00', paddingHorizontal: 16, paddingVertical: 5, borderRadius: 16 },
-  orangeOfferBadgeTxt: { color: '#FFF', fontSize: 12, fontWeight: '800', letterSpacing: 0.5 },
-  mainTitle: { color: '#FFF', fontSize: 44, fontWeight: '900', marginTop: 10, letterSpacing: -0.5 },
-  subTitle: { color: '#FFF', fontSize: 15, fontWeight: '600', marginTop: 4, marginBottom: 20 },
-  whiteBtn: { backgroundColor: '#FFF', width: width * 0.45, height: 42, borderRadius: 8, justifyContent: 'center', alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.15, shadowRadius: 3, elevation: 3 },
-  redBtnText: { color: '#C8162B', fontWeight: '800', fontSize: 14 },
-  outlineBtn: { borderWidth: 1.5, borderColor: '#FFF', width: width * 0.54, height: 42, borderRadius: 8, justifyContent: 'center', alignItems: 'center', marginTop: 10 },
-  whiteText: { color: '#FFF', fontWeight: '800', fontSize: 14 },
-  heroImage: { width: width * 0.82, height: 180, resizeMode: 'contain', marginTop: 20 },
-  wavyCurveBottomLayer: { position: 'absolute', bottom: -1, left: 0, right: 0, height: 20, backgroundColor: '#FFF', borderTopLeftRadius: 30, borderTopRightRadius: 30 },
-
-  basePadding: { padding: 15 },
-  featureCard: { backgroundColor: '#FFF', borderWidth: 1, borderColor: '#EEE', borderRadius: 12, padding: 15, marginBottom: 20 },
-  gridContainer: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 15 },
-  gridItem: { alignItems: 'center', width: '48%' },
-  featureTitle: { fontSize: 12, fontWeight: 'bold', color: '#000', marginTop: 5, textAlign: 'center' },
-  featureSub: { fontSize: 10, color: '#666', textAlign: 'center' },
-  sectionDivider: { color: '#B71C1C', textAlign: 'center', fontSize: 12, fontWeight: 'bold' },
-  darkHeading: { fontSize: 22, fontWeight: 'bold', color: '#111', textAlign: 'center', marginTop: 5, marginBottom: 15 },
-  categoryGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
-  catBox: { width: '48%', backgroundColor: '#FFF', borderWidth: 1, borderColor: '#F0F0F0', borderRadius: 12, padding: 10, alignItems: 'center', marginBottom: 15 },
-  catImage: { width: 90, height: 70, resizeMode: 'contain' },
-  catText: { fontSize: 11, fontWeight: 'bold', color: '#333', marginTop: 5, textAlign: 'center' },
-  viewAllBtn: { backgroundColor: '#B71C1C', paddingVertical: 12, borderRadius: 25, alignItems: 'center', marginVertical: 10 },
-  viewAllText: { color: '#FFF', fontWeight: 'bold', fontSize: 14 },
-  productRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 15 },
-  productCard: { width: '48%', backgroundColor: '#FFF', borderWidth: 1, borderColor: '#EEE', borderRadius: 12, padding: 10 },
-  prodImage: { width: '100%', height: 100, borderRadius: 8, resizeMode: 'cover' },
-  prodTitle: { fontSize: 13, fontWeight: 'bold', color: '#222', marginTop: 8 },
-  prodWeight: { fontSize: 11, color: '#777', marginTop: 2 },
-  priceRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 },
-  prodPrice: { fontSize: 14, fontWeight: 'bold', color: '#000' },
-  addBtn: { borderWidth: 1, borderColor: '#B71C1C', paddingHorizontal: 15, paddingVertical: 4, borderRadius: 6 },
-  addText: { color: '#B71C1C', fontWeight: 'bold', fontSize: 12 },
-  comingSoonBadge: { backgroundColor: '#FEF2F2', paddingVertical: 6, borderRadius: 6, alignItems: 'center', marginTop: 8, borderWidth: 1, borderColor: '#FEE2E2', width: '100%' },
-  comingSoonText: { color: '#B71C1C', fontSize: 12, fontWeight: 'bold' },
-  b2bContainer: { backgroundColor: '#111', padding: 25, marginTop: 15, alignItems: 'center' },
-  b2bTag: { color: '#FF8A80', fontSize: 11, fontWeight: 'bold' },
-  b2bHeading: { color: '#FFF', fontSize: 22, fontWeight: 'bold', marginTop: 5 },
-  b2bSub: { color: '#AAA', fontSize: 13, textAlign: 'center', marginTop: 5, marginBottom: 15 },
-  b2bButton: { backgroundColor: '#FFF', paddingVertical: 12, paddingHorizontal: 30, borderRadius: 8 },
-  b2bButtonText: { color: '#111', fontWeight: 'bold' },
-
-  bottomTabBar: { flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', height: 60, borderTopWidth: 1, borderColor: '#EEE', backgroundColor: '#FFF' },
-  tabItem: { alignItems: 'center', justifyContent: 'center', flex: 1 },
-  tabLabel: { color: '#718096', fontSize: 11, marginTop: 2, fontWeight: '500' },
-  activeTabLabel: { color: '#B31942', fontSize: 11, marginTop: 2, fontWeight: '700' },
-});
