@@ -1,7 +1,11 @@
 import React from 'react';
 import { StyleSheet, View, Text, Image, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { TopNavBar } from '../components/TopNavBar';
+import { BottomTabBar } from '../components/BottomTabBar';
+import { useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { styles } from '../styles/HomeScreenStyle';
 
 const { width } = Dimensions.get('window');
 
@@ -28,16 +32,10 @@ const UPCOMING_PRODUCTS = [
   { id: '4', title: 'Afghan Ka Pathan', img: require('../assets/image/AfganKaPathanChickenTikka.jpeg') },
 ];
 
-const BOTTOM_TABS = [
-  { name: 'Home', icon: 'alpha-d-circle-outline', selected: true },
-  { name: 'Categories', icon: 'grid', selected: false },
-  { name: 'Survey', icon: 'clipboard-text-outline', selected: false },
-  { name: 'Subscription', icon: 'calendar-month-outline', selected: false },
-  { name: 'Cart', icon: 'cart-outline', selected: false },
-];
-
 export default function HomeScreen() {
   const navigation = useNavigation<any>();
+
+  const [isBulkOrder, setIsBulkOrder] = useState(false);
 
   const openCategories = () => navigation.navigate('Categories');
   const openProfile = () => navigation.navigate('Profile');
@@ -47,15 +45,13 @@ export default function HomeScreen() {
       <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
         
         <View style={styles.heroSection}>
-          <View style={styles.headerRow}>
-            <View style={styles.toggleContainer}><Text style={styles.whiteText}>Bulk Order</Text></View>
-            <View style={styles.headerIcons}>
-              <Icon name="magnify" size={24} color="#FFF" style={{ marginRight: 15 }} />
-              <TouchableOpacity onPress={openProfile}>
-                <Icon name="menu" size={24} color="#FFF" />
-              </TouchableOpacity>
-            </View>
-          </View>
+          <TopNavBar 
+            title=""
+              isBulkOrder={isBulkOrder}
+              onToggleBulkOrder={() => setIsBulkOrder(!isBulkOrder)}
+              onSearchPress={() => console.log('Search Clicked')}
+              onMenuPress={openProfile}
+          />
 
           <View style={styles.centerItems}>
             <Text style={styles.badge}>LIMITED TIME OFFER</Text>
@@ -142,64 +138,7 @@ export default function HomeScreen() {
         </View>
       </ScrollView>
 
-      <View style={styles.bottomBar}>
-        {BOTTOM_TABS.map((tab, idx) => (
-          <TouchableOpacity key={idx} style={styles.tab} onPress={() => navigation.navigate(tab.name)}>
-            <Icon name={tab.icon} size={24} color={tab.selected ? '#B71C1C' : '#757575'} />
-            <Text style={{ color: tab.selected ? '#B71C1C' : '#757575', fontSize: 11, marginTop: 2 }}>{tab.name}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+      <BottomTabBar navigation={navigation} activeTab="Home" />
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FFF' },
-  heroSection: { backgroundColor: '#B71C1C', paddingBottom: 25,paddingTop: 25 },
-  headerRow: { flexDirection: 'row', justifyContent: 'space-between', padding: 15, marginTop: 10 },
-  toggleContainer: { backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: 15, paddingHorizontal: 20, paddingVertical: 5 },
-  headerIcons: { flexDirection: 'row', alignItems: 'center' },
-  centerItems: { alignItems: 'center', marginTop: 15 },
-  badge: { backgroundColor: '#FF9100', color: '#FFF', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12, fontSize: 11, fontWeight: 'bold' },
-  mainTitle: { color: '#FFF', fontSize: 36, fontWeight: 'bold', marginTop: 5 },
-  subTitle: { color: '#FFF', fontSize: 15, marginTop: 2, marginBottom: 15 },
-  whiteBtn: { backgroundColor: '#FFF', paddingVertical: 10, paddingHorizontal: 45, borderRadius: 8, marginBottom: 10 },
-  redBtnText: { color: '#B71C1C', fontWeight: 'bold' },
-  outlineBtn: { borderWidth: 1, borderColor: '#FFF', paddingVertical: 10, paddingHorizontal: 35, borderRadius: 8 },
-  whiteText: { color: '#FFF', fontWeight: 'bold' },
-  heroImage: { width: width * 0.9, height: 200, resizeMode: 'contain', marginTop: 15 },
-  basePadding: { padding: 15 },
-  featureCard: { backgroundColor: '#FFF', borderWidth: 1, borderColor: '#EEE', borderRadius: 12, padding: 15, marginBottom: 20 },
-  gridContainer: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 15 },
-  gridItem: { alignItems: 'center', width: '48%' },
-  featureTitle: { fontSize: 12, fontWeight: 'bold', color: '#000', marginTop: 5, textAlign: 'center' },
-  featureSub: { fontSize: 10, color: '#666', textAlign: 'center' },
-  sectionDivider: { color: '#B71C1C', textAlign: 'center', fontSize: 12, fontWeight: 'bold' },
-  darkHeading: { fontSize: 22, fontWeight: 'bold', color: '#111', textAlign: 'center', marginTop: 5, marginBottom: 15 },
-  categoryGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
-  catBox: { width: '48%', backgroundColor: '#FFF', borderWidth: 1, borderColor: '#F0F0F0', borderRadius: 12, padding: 10, alignItems: 'center', marginBottom: 15 },
-  catImage: { width: 90, height: 70, resizeMode: 'contain' },
-  catText: { fontSize: 11, fontWeight: 'bold', color: '#333', marginTop: 5, textAlign: 'center' },
-  viewAllBtn: { backgroundColor: '#B71C1C', paddingVertical: 12, borderRadius: 25, alignItems: 'center', marginVertical: 10 },
-  viewAllText: { color: '#FFF', fontWeight: 'bold', fontSize: 14 },
-  productRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 15 },
-  productCard: { width: '48%', backgroundColor: '#FFF', borderWidth: 1, borderColor: '#EEE', borderRadius: 12, padding: 10 },
-  prodImage: { width: '100%', height: 100, borderRadius: 8, resizeMode: 'cover' },
-  prodTitle: { fontSize: 13, fontWeight: 'bold', color: '#222', marginTop: 8 },
-  prodWeight: { fontSize: 11, color: '#777', marginTop: 2 },
-  priceRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 },
-  prodPrice: { fontSize: 14, fontWeight: 'bold', color: '#000' },
-  addBtn: { borderWidth: 1, borderColor: '#B71C1C', paddingHorizontal: 15, paddingVertical: 4, borderRadius: 6 },
-  addText: { color: '#B71C1C', fontWeight: 'bold', fontSize: 12 },
-  comingSoonBadge: { backgroundColor: '#FEF2F2', paddingVertical: 6, borderRadius: 6, alignItems: 'center', marginTop: 8, borderWidth: 1, borderColor: '#FEE2E2', width: '100%' },
-  comingSoonText: { color: '#B71C1C', fontSize: 12, fontWeight: 'bold' },
-  b2bContainer: { backgroundColor: '#111', padding: 25, marginTop: 15, alignItems: 'center' },
-  b2bTag: { color: '#FF8A80', fontSize: 11, fontWeight: 'bold' },
-  b2bHeading: { color: '#FFF', fontSize: 22, fontWeight: 'bold', marginTop: 5 },
-  b2bSub: { color: '#AAA', fontSize: 13, textAlign: 'center', marginTop: 5, marginBottom: 15 },
-  b2bButton: { backgroundColor: '#FFF', paddingVertical: 12, paddingHorizontal: 30, borderRadius: 8 },
-  b2bButtonText: { color: '#111', fontWeight: 'bold' },
-  bottomBar: { flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', height: 60, borderTopWidth: 1, borderTopColor: '#EEE', backgroundColor: '#FFF' },
-  tab: { alignItems: 'center', justifyContent: 'center', flex: 1 },
-});
