@@ -36,7 +36,7 @@ export default function ProfileScreen({ navigation }: any) {
         {/* SECTION A: SHOP & EXPLORE */}
         <Text style={styles.sectionHeader}>SHOP & EXPLORE</Text>
         
-        <TouchableOpacity style={styles.menuRowItem} onPress={() => console.log('Wishlist Clicked')}>
+        <TouchableOpacity style={styles.menuRowItem} onPress={() => navigation.navigate('Wishlist')}>
           <View style={styles.rowLeftGroup}>
             <Icon name="heart-outline" size={20} color="#718096" style={styles.rowIcon} />
             <Text style={styles.rowLabelText}>My Wishlist</Text>
@@ -55,7 +55,7 @@ export default function ProfileScreen({ navigation }: any) {
           <Icon name="chevron-forward" size={16} color="#CBD5E0" />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.menuRowItem} onPress={() => console.log('Help & Support Clicked')}>
+        <TouchableOpacity style={styles.menuRowItem} onPress={() => navigation.navigate('HelpAndSupport')}>
           <View style={styles.rowLeftGroup}>
             <Icon name="chatbox-ellipses-outline" size={20} color="#718096" style={styles.rowIcon} />
             <Text style={styles.rowLabelText}>Help & Support</Text>

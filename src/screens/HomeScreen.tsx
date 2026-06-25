@@ -34,6 +34,7 @@ const UPCOMING_PRODUCTS = [
 
 export default function HomeScreen() {
   const navigation = useNavigation<any>();
+  const [isBulkOrder, setIsBulkOrder] = useState(false);
 
   const [isBulkOrder, setIsBulkOrder] = useState(false);
 
@@ -42,7 +43,10 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
+      
+      {/* 🔴 1. FIXED TOP HEADER SECTION (Out of ScrollView with Unique Premium Background Tone) */}
+      <View style={styles.stickyHeaderCard}>
+        <Text style={styles.brandTextLogo}>Delwingz</Text>
         
         <View style={styles.heroSection}>
           <TopNavBar 
@@ -53,25 +57,34 @@ export default function HomeScreen() {
               onMenuPress={openProfile}
           />
 
+      {/* MAIN SCROLLABLE BODY */}
+      <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
+        
+        {/* HERO BANNER SECTION */}
+        <View style={styles.heroSection}>
           <View style={styles.centerItems}>
-            <Text style={styles.badge}>LIMITED TIME OFFER</Text>
+            <View style={styles.orangeOfferBadge}>
+              <Text style={styles.orangeOfferBadgeTxt}>LIMITED TIME OFFER</Text>
+            </View>
             <Text style={styles.mainTitle}>Flat 20% OFF</Text>
             <Text style={styles.subTitle}>On Your First 5 Orders</Text>
             
-            <TouchableOpacity style={styles.whiteBtn} onPress={openCategories}>
-              <Text style={styles.redBtnText}>Order Now ›</Text>
+            <TouchableOpacity style={styles.whiteBtn} onPress={openCategories} activeOpacity={0.9}>
+              <Text style={styles.redBtnText}>Order Now  ›</Text>
             </TouchableOpacity>
             
-            <TouchableOpacity style={styles.outlineBtn} onPress={openCategories}>
-              <Text style={styles.whiteText}>Explore Categories ›</Text>
+            <TouchableOpacity style={styles.outlineBtn} onPress={openCategories} activeOpacity={0.8}>
+              <Text style={styles.whiteText}>Explore Categories  ›</Text>
             </TouchableOpacity>
             
             <Image source={require('../assets/image/HomePageCover.jpeg')} style={styles.heroImage} />
           </View>
+          
+          {/* Curved boundary styling */}
+          <View style={styles.wavyCurveBottomLayer} />
         </View>
 
         <View style={styles.basePadding}>
-          
           <View style={styles.featureCard}>
             <View style={styles.gridContainer}>
               {FEATURES_LIST.map((item, idx) => (
@@ -96,7 +109,7 @@ export default function HomeScreen() {
           </View>
 
           <TouchableOpacity style={styles.viewAllBtn} onPress={openCategories}>
-            <Text style={styles.viewAllText}>View All Categories  ›</Text>
+            <Text style={styles.viewAllText}>View All Categories   ›</Text>
           </TouchableOpacity>
 
           <Text style={[styles.sectionDivider, { marginTop: 30 }]}>— Fresh & Premium —</Text>
@@ -129,11 +142,11 @@ export default function HomeScreen() {
         </View>
 
         <View style={styles.b2bContainer}>
-          <Text style={styles.b2bTag}>+  B2B SOLUTIONS</Text>
+          <Text style={styles.b2bTag}>+   B2B SOLUTIONS</Text>
           <Text style={styles.b2bHeading}>Business Solutions Available</Text>
           <Text style={styles.b2bSub}>Are you a restaurant, hotel, or catering service? Discover our bulk meat supply solutions.</Text>
           <TouchableOpacity style={styles.b2bButton}>
-            <Text style={styles.b2bButtonText}>Explore B2B Solutions  ›</Text>
+            <Text style={styles.b2bButtonText}>Explore B2B Solutions   ›</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

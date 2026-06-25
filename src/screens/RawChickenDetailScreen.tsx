@@ -1,12 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { StyleSheet, View, Text, Image, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { CartContext } from '../context/CartContext'; 
+import { WishlistContext } from '../context/WishlistContext'; 
+import dbEngine from '../database/DatabaseEngine';
 
 const { width } = Dimensions.get('window');
 
 const SIZE_OPTIONS = [
-  { label: '550g', price: 180, mrp: 200, discount: '10% OFF' },
-  { label: '250g', price: 90, mrp: 100, discount: '10% OFF' },
+  { label: '500g', price: 195, mrp: 220, discount: '11% OFF' },
+  { label: '250g', price: 100, mrp: 115, discount: '13% OFF' },
 ];
 
 const MARKET_CHICKEN_BAD = [
@@ -33,21 +36,128 @@ const COOKING_STEPS = [
 ];
 
 const NUTRITION_LIST = [
-  { name: 'PROTEIN', value: '19.7 g' },
-  { name: 'CALORIES', value: '150 kcal' },
+  { name: 'PROTEIN', value: '20.5 g' },
+  { name: 'CALORIES', value: '142 kcal' },
   { name: 'CARBOHYDRATES', value: '0 g' },
-  { name: 'FAT', value: '5 g' },
-  { name: 'CHOLESTEROL', value: '118 mg' },
+  { name: 'FAT', value: '4.5 g' },
+  { name: 'CHOLESTEROL', value: '95 mg' },
 ];
+
 export default function RawChickenDetailScreen({ navigation }: any) {
+  
+  // ─── 🔴 TOP LEVEL HOOKS DECLARATION ───
+  const cartContextData = useContext(CartContext);
+  const wishlistContextData = useContext(WishlistContext);
 
   const [selectedSize, setSelectedSize] = useState(0);
+  const [isLiked, setIsLiked] = useState(false);
+
+  // Safe parameters destructured after strict state instantiation
+  const refreshCartFromSQL = cartContextData?.refreshCartFromSQL || null;
+  const refreshWishlistFromSQL = wishlistContextData?.refreshWishlistFromSQL || null;
   const activeOption = SIZE_OPTIONS[selectedSize];
+
+  // Specific schema key targets for this screen configuration
+  const productId = 'rc2'; // Unique ID for standard raw chicken cuts
+  const productName = 'Raw Chicken';
+  const productDesc = 'Premium, tender, fresh raw chicken cuts expertly sourced and managed through temperature-controlled processing strings.';
+
+  // ─── SCAN LOGS ON PRESENT VIEW ROUTE FOCUS ───
+  useEffect(() => {
+    const checkWishlistStatus = async () => {
+      try {
+        await dbEngine.initDatabase();
+        const result = await dbEngine.execute("SELECT id FROM wishlist WHERE id = ?;", [productId]);
+        if (result && result.rows && result.rows.length > 0) {
+          setIsLiked(true);
+        } else {
+          setIsLiked(false);
+        }
+      } catch (err) {
+        console.log("Error scanning local wishlist rows inside main raw chicken screen:", err);
+      }
+    };
+
+    const unsubscribe = navigation.addListener('focus', checkWishlistStatus);
+    checkWishlistStatus();
+    return unsubscribe;
+  }, [navigation]);
+
+  // 🛒 ADD TO CART ENGINE HANDLER
+  const handleAddToCart = async () => {
+    try {
+      await dbEngine.initDatabase();
+      const checkResult = await dbEngine.execute("SELECT qty FROM cart WHERE id = ?;", [productId]);
+
+      if (checkResult && checkResult.rows && checkResult.rows.length > 0) {
+        const currentQty = checkResult.rows.item(0).qty;
+        await dbEngine.execute(
+          "UPDATE cart SET qty = ?, size = ?, price = ? WHERE id = ?;", 
+          [currentQty + 1, activeOption.label, activeOption.price, productId]
+        );
+      } else {
+        await dbEngine.execute(
+          "INSERT INTO cart (id, name, price, size, qty, image, description, rating) VALUES (?, ?, ?, ?, ?, ?, ?, ?);",
+          [
+            productId,
+            productName,
+            activeOption.price,
+            activeOption.label,
+            1,
+            String(require('../assets/image/RawChickenKima.jpeg')), // Reuse identical asset mapper references
+            productDesc,
+            4.8
+          ]
+        );
+      }
+
+      if (refreshCartFromSQL) {
+        refreshCartFromSQL();
+      }
+
+      navigation.navigate('Cart');
+    } catch (error) {
+      console.log("Error inserting data into details layout handler context:", error);
+    }
+  };
+
+  // 💖 SILENT TOGGLE BACKGROUND WISHLIST STACK ROW OPERATION
+  const handleAddToWishlist = async () => {
+    try {
+      await dbEngine.initDatabase();
+
+      if (isLiked) {
+        await dbEngine.execute("DELETE FROM wishlist WHERE id = ?;", [productId]);
+        setIsLiked(false);
+      } else {
+        const wishlistProductItem = {
+          id: productId,
+          title: productName,
+          name: productName,
+          price: activeOption.price,
+          mrp: activeOption.mrp,
+          discount: activeOption.discount,
+          selectedVariant: activeOption.label,
+          variants: SIZE_OPTIONS.map(opt => opt.label),
+          image: String(require('../assets/image/RawChickenKima.jpeg')), 
+        };
+
+        await dbEngine.addToWishlist(wishlistProductItem);
+        setIsLiked(true);
+      }
+
+      if (refreshWishlistFromSQL) {
+        refreshWishlistFromSQL();
+      }
+    } catch (error) {
+      console.log("Error updating raw chicken wishlist row execution data strings:", error);
+    }
+  };
+
   return (
     <View style={styles.container}>
-
+      {/* APP HEADER */}
       <View style={styles.appHeader}>
-
         <Text style={styles.brandLogo}>Delwingz</Text>
         <View style={styles.headerRightIcons}>
           <View style={styles.toggleContainer}><Text style={styles.toggleText}>Bulk Order</Text></View>
@@ -56,30 +166,30 @@ export default function RawChickenDetailScreen({ navigation }: any) {
         </View>
       </View>
 
-      <ScrollView>
-
+      <ScrollView contentContainerStyle={styles.scrollPadding} showsVerticalScrollIndicator={false}>
+        {/* BREADCRUMBS */}
         <View style={styles.breadcrumbRow}>
-
-          <TouchableOpacity> <Text style={styles.breadText}
-          onPress={() => navigation.navigate('Home')}
-          >Home </Text> </TouchableOpacity>
-
-        <TouchableOpacity><Text style={styles.breadText}
-        onPress={() => navigation.navigate('RawChicken')}
-        > ›  Raw Chicken  ›  </Text></TouchableOpacity>
-          <Text style={styles.breadActive}>Raw Chicken</Text>
+          <TouchableOpacity onPress={() => navigation.navigate('Home')}>
+            <Text style={styles.breadText}>Home </Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate('RawChicken')}>
+            <Text style={styles.breadText}> ›  Raw Chicken  ›  </Text>
+          </TouchableOpacity>
+          <Text style={styles.breadActive}>{productName}</Text>
         </View>
 
-        <Image source={require('../assets/image/RawChicken.jpeg')} style={styles.mainProductImage} />
+        {/* MAIN PRODUCT IMAGE */}
+        <Image source={require('../assets/image/RawChickenKima.jpeg')} style={styles.mainProductImage} />
 
+        {/* BLACK INFO CARD */}
         <View style={styles.infoCard}>
           <View style={styles.titleRow}>
-            <Text style={styles.productTitle}>Raw Chicken</Text>
+            <Text style={styles.productTitle}>{productName}</Text>
           </View>
           
           <View style={styles.descBox}>
             <Text style={styles.descText} numberOfLines={3}>
-              Our Raw Chicken is a tender and flavorful cut known for its naturally juicy dark meat. Carefully sourced and...
+              {productDesc} Perfect for multiple home cooked meal configurations, curry cuts, and premium family grills.
             </Text>
             <TouchableOpacity><Text style={styles.readMoreText}>READ MORE ↓</Text></TouchableOpacity>
           </View>
@@ -102,21 +212,26 @@ export default function RawChickenDetailScreen({ navigation }: any) {
             })}
           </View>
 
+          {/* PRICE ROW */}
           <View style={styles.mainPriceRow}>
             <Text style={styles.boldPriceText}>₹{activeOption?.price}</Text>
             <Text style={styles.mrpText}>MRP: ₹{activeOption?.mrp}</Text>
             <View style={styles.discountBadge}><Text style={styles.discountText}>{activeOption?.discount}</Text></View>
           </View>
 
-          {/* BUTTONS ROW */}
+          {/* ACTION BUTTONS WITH SILENT TOGGLE SYSTEM INTEGRATED */}
           <View style={styles.actionBtnRow}>
-            <TouchableOpacity style={styles.addToCartBtn}>
+            <TouchableOpacity style={styles.addToCartBtn} activeOpacity={0.8} onPress={handleAddToCart}>
               <Icon name="cart-outline" size={20} color="#000" style={{ marginRight: 8 }} />
               <Text style={styles.addToCartText}>Add to Cart</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.wishlistBtn}>
-              <Icon name="heart-outline" size={22} color="#FFF" />
+            <TouchableOpacity style={styles.wishlistBtn} activeOpacity={0.8} onPress={handleAddToWishlist}>
+              <Icon 
+                name={isLiked ? "heart" : "heart-outline"} 
+                size={22} 
+                color={isLiked ? "#EF4444" : "#FFF"} 
+              />
             </TouchableOpacity>
           </View>
 
@@ -126,7 +241,7 @@ export default function RawChickenDetailScreen({ navigation }: any) {
           </TouchableOpacity>
         </View>
 
-        
+        {/* WHY DELWINGZ */}
         <Text style={styles.whyTitle}>Why Delwingz?</Text>
         
         {/* MARKET CHICKEN BAD CARDS */}
@@ -136,7 +251,7 @@ export default function RawChickenDetailScreen({ navigation }: any) {
             <Text style={styles.cardHeaderTitle}>Market Chicken</Text>
           </View>
           {MARKET_CHICKEN_BAD.map((text, i) => (
-            <View  style={styles.bulletRow}>
+            <View key={i} style={styles.bulletRow}>
               <Icon name="close-circle-outline" size={18} color="#E53E3E" style={{ marginRight: 10 }} />
               <Text style={styles.bulletText}>{text}</Text>
             </View>
@@ -150,17 +265,17 @@ export default function RawChickenDetailScreen({ navigation }: any) {
             <Text style={styles.cardHeaderTitle}>Delwingz Advantage</Text>
           </View>
           {DELWINGZ_ADVANTAGE.map((text, i) => (
-            <View  style={styles.bulletRow}>
+            <View key={i} style={styles.bulletRow}>
               <Icon name="check-circle-outline" size={18} color="#38A169" style={{ marginRight: 10 }} />
               <Text style={styles.bulletText}>{text}</Text>
             </View>
           ))}
         </View>
 
-        {/* 🟢 COOKING & NUTRITION SECTION */}
+        {/* COOKING & NUTRITION SECTION */}
         <Text style={styles.whyTitle}>Cooking & Nutrition</Text>
         
-        {/* HOW TO COOK STEP BOX */}
+        {/* HOW TO COOK */}
         <View style={styles.burgundyCard}>
           <View style={styles.burgundyHeader}>
             <Text style={styles.burgundyTag}>PREPARATION GUIDE</Text>
@@ -176,7 +291,7 @@ export default function RawChickenDetailScreen({ navigation }: any) {
           </View>
         </View>
 
-        {/* NUTRITIONAL VALUES GRID */}
+        {/* NUTRITIONAL VALUES */}
         <View style={styles.burgundyCard}>
           <View style={styles.burgundyHeader}>
             <Text style={styles.burgundyTag}>PER 100G • APPROX.</Text>
@@ -191,9 +306,6 @@ export default function RawChickenDetailScreen({ navigation }: any) {
             ))}
           </View>
         </View>
-         
-        
-       
 
       </ScrollView>
     </View>
@@ -202,23 +314,19 @@ export default function RawChickenDetailScreen({ navigation }: any) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#FFF' },
-  scrollPadding: { paddingBottom: 100, backgroundColor: '#FFF5F6' },
-
+  scrollPadding: { paddingBottom: 50 },
   appHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingTop: 50, paddingBottom: 15, backgroundColor: '#FFF', borderBottomWidth: 1, borderColor: '#EEE' },
   brandLogo: { fontSize: 22, fontWeight: 'bold', color: '#B31942', fontStyle: 'italic' },
   headerRightIcons: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   toggleContainer: { backgroundColor: '#FFF0F2', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 20, borderWidth: 1, borderColor: '#FFE4E6' },
   toggleText: { fontSize: 12, fontWeight: '700', color: '#B31942' },
   iconBtn: { padding: 4 },
-
-
   breadcrumbRow: { flexDirection: 'row', paddingHorizontal: 16, marginTop: 12 },
   breadText: { color: '#718096', fontSize: 12 },
   breadActive: { color: '#B31942', fontSize: 12, fontWeight: 'bold' },
   mainProductImage: { width: width, height: 260, resizeMode: 'cover', marginTop: 10 },
-
   infoCard: { backgroundColor: '#111', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, marginTop: -20 },
-  titleRow: { flexDirection: 'column', alignItems: 'center' },
+  titleRow: { flexDirection: 'column', alignItems: 'flex-start' },
   productTitle: { color: '#FFF', fontSize: 22, fontWeight: 'bold' },
   descBox: { backgroundColor: '#222', padding: 12, borderRadius: 12, marginTop: 15 },
   descText: { color: '#AAA', fontSize: 13, lineHeight: 18 },
@@ -244,14 +352,12 @@ const styles = StyleSheet.create({
   wishlistBtn: { width: 50, backgroundColor: '#222', borderRadius: 25, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: '#333' },
   subscribeBtn: { backgroundColor: '#B31942', paddingVertical: 14, borderRadius: 25, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 12 },
   subscribeText: { color: '#FFF', fontWeight: 'bold', fontSize: 15 },
-
   whyTitle: { fontSize: 20, fontWeight: 'bold', color: '#800A26', marginHorizontal: 16, marginTop: 30, marginBottom: 10 },
   whiteCardContainer: { backgroundColor: '#FFF', marginHorizontal: 16, borderRadius: 16, padding: 16, marginBottom: 15, borderWidth: 1, borderColor: '#E2E8F0' },
   cardHeaderRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 15, borderBottomWidth: 1, borderColor: '#F7FAFC', paddingBottom: 8 },
   cardHeaderTitle: { fontSize: 16, fontWeight: 'bold', color: '#1A202C', marginLeft: 10 },
   bulletRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
   bulletText: { color: '#4A5568', fontSize: 13, flex: 1 },
-
   burgundyCard: { backgroundColor: '#FFF', marginHorizontal: 16, borderRadius: 16, overflow: 'hidden', marginBottom: 15, borderWidth: 1, borderColor: '#FFE4E6' },
   burgundyHeader: { backgroundColor: '#800A26', padding: 15 },
   burgundyTag: { color: '#FFB8C6', fontSize: 10, fontWeight: 'bold', letterSpacing: 0.5 },

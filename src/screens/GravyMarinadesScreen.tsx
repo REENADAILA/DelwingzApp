@@ -7,12 +7,13 @@ import dbEngine from '../database/DatabaseEngine';
 const GRAVY_PRODUCTS = [
   {
     id: 'gm1',
-    name: 'Afghan Ka Pathan Chicken Tikka',
+    name: 'Kerala Coconut Curry Chicken Gravy', // 👈 Afghan Ka Pathan ko yahan replace kiya
     weight: '165g',
     price: '900',
     oldPrice: '1000',
     discount: '10% OFF',
-    image: require('../assets/image/GravyMarinades.jpeg'), 
+    image: require('../assets/image/KeralaCoconutCurryChickenGravy.jpeg'), 
+    targetScreen: 'KeralaCoconutCurryChickenGravyDetail', 
     description: 'Rich gravy marinade styled with premium aromatic spices.',
   },
   {
@@ -22,7 +23,8 @@ const GRAVY_PRODUCTS = [
     price: '179',
     oldPrice: '199',
     discount: '10% OFF',
-    image: require('../assets/image/KeralaCoconutCurryChickenGravy.jpeg'), 
+    image: require('../assets/image/CheesyTomatoChickenTikka.jpeg'), 
+    targetScreen: 'CheesyTomatoChickenTikkaDetail', 
     description: 'Creamy cheese and tangy tomato infused chicken tikka gravy.',
   },
 ];
@@ -177,10 +179,10 @@ export default function GravyMarinadesScreen({ navigation }: any) {
             return (
               <View key={product.id} style={styles.productCard}>
                 
-                {/* Product Upper Block linked to Detail Routing */}
+                {/* Clickable Upper Section */}
                 <TouchableOpacity 
                   activeOpacity={0.9}
-                  onPress={() => navigation.navigate('ProductDetails', { productId: product.id })}
+                  onPress={() => navigation.navigate(product.targetScreen)}
                 >
                   <View style={styles.discountBadge}>
                     <Text style={styles.discountBadgeText}>{product.discount}</Text>
