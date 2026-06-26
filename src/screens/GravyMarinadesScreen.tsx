@@ -7,7 +7,7 @@ import dbEngine from '../database/DatabaseEngine';
 const GRAVY_PRODUCTS = [
   {
     id: 'gm1',
-    name: 'Kerala Coconut Curry Chicken Gravy', // 👈 Afghan Ka Pathan ko yahan replace kiya
+    name: 'Kerala Coconut Curry Chicken Gravy',
     weight: '165g',
     price: '900',
     oldPrice: '1000',
@@ -27,17 +27,48 @@ const GRAVY_PRODUCTS = [
     targetScreen: 'CheesyTomatoChickenTikkaDetail', 
     description: 'Creamy cheese and tangy tomato infused chicken tikka gravy.',
   },
+  {
+    id: 'gm3',
+    name: 'Coconut Curry Chicken',
+    weight: '165g',
+    price: '210',
+    oldPrice: '240',
+    discount: '12% OFF',
+    image: require('../assets/image/CoconutCurryChicken.jpeg'), // Safe Fallback Asset
+    targetScreen: 'CoconutCurryChickenDetail', 
+    description: 'Delectable fresh chicken pieces in deep coastal coconut curry base.',
+  },
+  {
+    id: 'gm4',
+    name: 'Jaipur Shahi Korma Chicken Gravy',
+    weight: '165g',
+    price: '249',
+    oldPrice: '299',
+    discount: '16% OFF',
+    image: require('../assets/image/JaipurShahiKormaChickenGravy.jpeg'), // Safe Fallback Asset
+    targetScreen: 'JaipurShahiKormaChickenGravyDetail', 
+    description: 'Royal rich cashew and shahi spice marinade twisted chicken tikka gravy.',
+  },
+  {
+    id: 'gm5',
+    name: 'Gravy Marinades Mix',
+    weight: '165g',
+    price: '185',
+    oldPrice: '210',
+    discount: '11% OFF',
+    image: require('../assets/image/GravyMarinades.jpeg'), 
+    targetScreen: 'GravyMarinadesDetail', 
+    description: 'Signature multipurpose raw chicken marinade base gravy paste.',
+  },
 ];
 
 export default function GravyMarinadesScreen({ navigation }: any) {
   const { refreshCartFromSQL } = useContext(CartContext) || {};
   
-  // 🔘 States tracking for flash transitions, direct quantity updates, and live tab counter bubble
   const [quantities, setQuantities] = useState<{ [key: string]: number }>({});
   const [animatingButtons, setAnimatingButtons] = useState<{ [key: string]: boolean }>({});
   const [cartBadgeCount, setCartBadgeCount] = useState<number>(0);
 
-  // 🛒 Initialize setup by pulling current items array from SQLite
   useEffect(() => {
     fetchCurrentCartStatus();
   }, []);
@@ -64,13 +95,11 @@ export default function GravyMarinadesScreen({ navigation }: any) {
     }
   };
 
-  // ➕ PLUS / FIRST CLICK ENGINE HANDLER
   const handleAddToCart = async (product: any) => {
     const currentQty = quantities[product.id] || 0;
     const nextQty = currentQty + 1;
 
     try {
-      // Background temporary colored flash switch (1.2 Seconds state shift)
       if (currentQty === 0) {
         setAnimatingButtons(prev => ({ ...prev, [product.id]: true }));
         setTimeout(() => {
@@ -98,7 +127,6 @@ export default function GravyMarinadesScreen({ navigation }: any) {
     }
   };
 
-  // ➖ MINUS COUNTER DECREMENT HANDLER
   const handleRemoveFromCart = async (product: any) => {
     const currentQty = quantities[product.id] || 0;
     if (currentQty <= 0) return;
@@ -130,7 +158,7 @@ export default function GravyMarinadesScreen({ navigation }: any) {
   return (
     <View style={styles.container}>
       
-      {/* 1. TOP APP HEADER BAR */}
+      {/* TOP APP HEADER BAR */}
       <View style={styles.appHeader}>
         <Text style={styles.brandLogo}>Delwingz</Text>
         <View style={styles.headerRightIcons}>
@@ -149,7 +177,7 @@ export default function GravyMarinadesScreen({ navigation }: any) {
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollPadding}>
         
-        {/* 2. BURGUNDY CATEGORY HEADER BANNER */}
+        {/* BURGUNDY CATEGORY HEADER BANNER */}
         <View style={styles.categoryBanner}>
           <TouchableOpacity style={styles.backArrowBtn} onPress={() => navigation.goBack()}>
             <Icon name="chevron-back" size={20} color="#FFF" />
@@ -163,14 +191,14 @@ export default function GravyMarinadesScreen({ navigation }: any) {
           </View>
         </View>
 
-        {/* 3. FILTER PILLS SECTION */}
+        {/* FILTER PILLS SECTION */}
         <View style={styles.pillsRow}>
           <View style={styles.activePill}>
             <Text style={styles.activePillText}>All</Text>
           </View>
         </View>
 
-        {/* 4. 2-COLUMN PRODUCT GRID */}
+        {/* 2-COLUMN PRODUCT GRID */}
         <View style={styles.productsGrid}>
           {GRAVY_PRODUCTS.map((product) => {
             const qty = quantities[product.id] || 0;
@@ -179,7 +207,6 @@ export default function GravyMarinadesScreen({ navigation }: any) {
             return (
               <View key={product.id} style={styles.productCard}>
                 
-                {/* Clickable Upper Section */}
                 <TouchableOpacity 
                   activeOpacity={0.9}
                   onPress={() => navigation.navigate(product.targetScreen)}
@@ -196,7 +223,7 @@ export default function GravyMarinadesScreen({ navigation }: any) {
                   </View>
                 </TouchableOpacity>
                 
-                {/* Bottom Independent Action Segment */}
+                {/* Bottom Action Segment */}
                 <View style={styles.productBottomActionBlock}>
                   <View style={styles.priceActionRow}>
                     <View>
@@ -204,7 +231,6 @@ export default function GravyMarinadesScreen({ navigation }: any) {
                       <Text style={styles.oldPrice}>₹{product.oldPrice}</Text>
                     </View>
                     
-                    {/* TRANSFORMING DYNAMIC COUNTER BAR */}
                     {isAnimating ? (
                       <View style={styles.animatingButtonBlock}>
                         <Text style={styles.animatingButtonText}>ADDED</Text>
@@ -237,7 +263,7 @@ export default function GravyMarinadesScreen({ navigation }: any) {
         </View>
       </ScrollView>
 
-      {/* 5. BOTTOM TAB BAR WITH SYNCHRONIZED COUNTER BADGE */}
+      {/* BOTTOM TAB BAR WITH COUNTER BADGE */}
       <View style={styles.bottomTabBar}>
         <TouchableOpacity style={styles.tabItem} onPress={() => navigation.navigate('Home')}>
           <Icon name="home-outline" size={20} color="#718096" />

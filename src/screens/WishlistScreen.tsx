@@ -9,8 +9,24 @@ import dbEngine from '../database/DatabaseEngine';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
+// ─── 📦 FIXED LOCAL IMAGES MAPPING REGISTRY ───
+// Title ke keyword ke hisab se exact local image load hogi, chahe 100 products hon!
+const FIXED_PRODUCT_IMAGES: { [key: string]: any } = {
+  'KEEMA': require('../assets/image/RawChickenKima.jpeg'),
+  'KIMA': require('../assets/image/RawChickenKima.jpeg'),
+  'COCONUT': require('../assets/image/KeralaCoconutCurryChickenGravy.jpeg'),
+  'KERALA': require('../assets/image/KeralaCoconutCurryChickenGravy.jpeg'),
+  'AFGHAN': require('../assets/image/AfganKaPathanChickenTikka.jpeg'),
+  'PATHAN': require('../assets/image/AfganKaPathanChickenTikka.jpeg'),
+  'TIKKA': require('../assets/image/TikkaMarinades.jpeg'),
+  'CHEESY': require('../assets/image/TikkaMarinades.jpeg'),
+  'TOMATO': require('../assets/image/TikkaMarinades.jpeg'),
+  'WHOLE': require('../assets/image/HomePageCover.jpeg'),
+  'RAW CHICKEN': require('../assets/image/RawChicken.jpeg'),
+  'GRAVY': require('../assets/image/GravyMarinades.jpeg'),
+};
+
 export const WishlistScreen = () => {
-  // ─── 🔴 STABILIZED TOP-LEVEL HOOK CALLS (NO INLINE CONDITIONAL TRAPS) ───
   const navigation = useNavigation<any>();
   const wishlistContextData = useContext(WishlistContext);
   const cartContextData = useContext(CartContext);
@@ -18,9 +34,28 @@ export const WishlistScreen = () => {
   const [wishlistItems, setWishlistItems] = useState<any[]>([]);
   const [quantities, setQuantities] = useState<{ [key: string]: number }>({});
 
-  // Safe reference extractions without disrupting the React call stack queue order
   const refreshWishlistFromSQL = wishlistContextData?.refreshWishlistFromSQL;
   const refreshCartFromSQL = cartContextData?.refreshCartFromSQL;
+
+  // ─── 🛠️ CLEAN IMAGE RESOLVER FUNCTION ───
+  const getCorrectProductImage = (title: string, dbImage: any) => {
+    const cleanTitle = (title || '').toUpperCase();
+    
+    // Check keywords in the product title
+    for (const key of Object.keys(FIXED_PRODUCT_IMAGES)) {
+      if (cleanTitle.includes(key)) {
+        return FIXED_PRODUCT_IMAGES[key];
+      }
+    }
+
+    // If database already holds a valid static resource asset index
+    if (dbImage && typeof dbImage === 'number') {
+      return dbImage;
+    }
+
+    // Standard absolute fallback image if no keyword matches
+    return require('../assets/image/RawChicken.jpeg');
+  };
 
   const fetchWishlistItems = async () => {
     try {
@@ -32,7 +67,10 @@ export const WishlistScreen = () => {
       if (result && result.rows && result.rows.length > 0) {
         for (let i = 0; i < result.rows.length; i++) {
           const row = result.rows.item(i);
-          const imageSource = isNaN(Number(row.image)) ? row.image : Number(row.image);
+          const productTitle = row.title || row.name || 'Premium Meat Item';
+          
+          // Mapped to correct image without touching navigation routing layers
+          const finalProductImage = getCorrectProductImage(productTitle, row.image);
 
           let parsedVariants = [];
           if (row.variants) {
@@ -45,13 +83,13 @@ export const WishlistScreen = () => {
 
           tempItems.push({
             id: row.id,
-            title: row.title || row.name || 'Premium Meat Item',
+            title: productTitle,
             price: parseFloat(row.price) || 0,
             mrp: parseFloat(row.mrp) || 0,
             discount: row.discount || '10% OFF',
             selectedVariant: row.selectedVariant || '',
             variants: parsedVariants,
-            image: imageSource,
+            image: finalProductImage
           });
 
           initialQuantities[row.id] = 1;
@@ -64,18 +102,15 @@ export const WishlistScreen = () => {
         refreshWishlistFromSQL();
       }
     } catch (error) {
-      console.log("Error loading wishlist items into screen view matrix:", error);
+      console.log("Error fetching clean wishlist rows:", error);
     }
   };
 
-  // ─── STABILIZED EFFECT BOUND TO CORE NAVIGATION OBJECTS ───
   useEffect(() => {
     fetchWishlistItems();
-
     const unsubscribe = navigation.addListener('focus', () => {
       fetchWishlistItems();
     });
-
     return unsubscribe;
   }, [navigation]);
 
@@ -85,7 +120,7 @@ export const WishlistScreen = () => {
       await dbEngine.execute("DELETE FROM wishlist WHERE id = ?;", [id]);
       fetchWishlistItems();
     } catch (error) {
-      console.log("Error removing item from SQLite table row:", error);
+      console.log("Error removing item from wishlist view:", error);
     }
   };
 
@@ -120,7 +155,7 @@ export const WishlistScreen = () => {
             item.price,
             itemSize,
             itemQty,
-            String(item.image),
+            typeof item.image === 'number' ? String(item.image) : item.image,
             'Premium product added from your saved wishlist configuration.',
             4.8
           ]
@@ -130,20 +165,9 @@ export const WishlistScreen = () => {
       if (refreshCartFromSQL) {
         refreshCartFromSQL();
       }
-
       navigation.navigate('Cart');
     } catch (error) {
-      console.log("Error pushing custom item from wishlist loop directly into cart table row:", error);
-    }
-  };
-
-  const handleCardNavigation = (id: string) => {
-    if (id === 'rc1') {
-      navigation.navigate('RawChickenKeemaDetail');
-    } else if (id === 'tk1') {
-      navigation.navigate('AfganKaPathanChickenTikka');
-    } else {
-      navigation.navigate('Home');
+      console.log("Error adding wishlist item to active cart table:", error);
     }
   };
 
@@ -151,11 +175,8 @@ export const WishlistScreen = () => {
     const currentQty = quantities[item.id] || 1;
 
     return (
-      <TouchableOpacity 
-        style={styles.card} 
-        activeOpacity={0.95} 
-        onPress={() => handleCardNavigation(item.id)}
-      >
+      // ─── 🛠️ REMOVED THE BROKEN NAVIGATION ON PRESS LAYER ───
+      <View style={styles.card}>
         <View style={styles.imageContainer}>
           {item.image ? (
             <Image 
@@ -232,7 +253,7 @@ export const WishlistScreen = () => {
             </View>
           </View>
         </View>
-      </TouchableOpacity>
+      </View>
     );
   };
 
@@ -245,10 +266,7 @@ export const WishlistScreen = () => {
       <Text style={styles.emptySubtitle}>
         Seems like you haven't added any premium meats or items to your wishlist yet.
       </Text>
-      <TouchableOpacity 
-        style={styles.exploreBtn} 
-        onPress={() => navigation.goBack()}
-      >
+      <TouchableOpacity style={styles.exploreBtn} onPress={() => navigation.goBack()}>
         <Text style={styles.exploreBtnText}>Start Shopping</Text>
       </TouchableOpacity>
     </View>
@@ -297,7 +315,7 @@ export default WishlistScreen;
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#FFF5F6' },
-  listContent: { paddingBottom: 40, paddingTop: 6 },
+  listContent: { paddingBottom: 40, paddingTop: 10 },
   centerEmptyList: { flexGrow: 1, justifyContent: 'center' },
   headerBarStatic: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 14, paddingHorizontal: 16, borderBottomWidth: 1, borderColor: '#FFE4E6', backgroundColor: '#FFF', marginTop: 40 },
   headerLeftTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },

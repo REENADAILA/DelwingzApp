@@ -27,17 +27,59 @@ const RAW_CHICKEN_PRODUCTS = [
     targetScreen: 'RawChickenDetail',
     description: 'Fresh premium whole broiler raw chicken.',
   },
+  {
+    id: 'rc3',
+    name: 'Raw Chicken Thigh',
+    weight: '250g',
+    price: '120',
+    oldPrice: '140',
+    discount: '14% OFF',
+    image: require('../assets/image/RawChickenThigh.jpeg'),
+    targetScreen: 'RawChickenThighDetail',
+    description: 'Fresh and juicy bone-in raw chicken thigh pieces.',
+  },
+  {
+    id: 'rc4',
+    name: 'Raw Chicken Leg',
+    weight: '250g',
+    price: '130',
+    oldPrice: '150',
+    discount: '13% OFF',
+    image: require('../assets/image/RawChickenLeg.jpeg'),
+    targetScreen: 'RawChickenLegDetail',
+    description: 'Tender and meaty raw chicken drumsticks / leg pieces.',
+  },
+  {
+    id: 'rc5',
+    name: 'Raw Chicken Breast',
+    weight: '250g',
+    price: '140',
+    oldPrice: '160',
+    discount: '12% OFF',
+    image: require('../assets/image/RawChickenBreast.jpeg'),
+    targetScreen: 'RawChickenBreastDetail',
+    description: 'Fresh, skinless and boneless premium raw chicken breast fillets.',
+  },
+  {
+    id: 'rc6',
+    name: 'Raw Chicken Wings',
+    weight: '250g',
+    price: '95',
+    oldPrice: '110',
+    discount: '13% OFF',
+    image: require('../assets/image/RawChickenWings.jpeg'),
+    targetScreen: 'RawChickenWingsDetail',
+    description: 'Fresh juicy raw chicken wings perfect for snacks and starters.',
+  },
 ];
 
 export default function RawChickenScreen({ navigation }: any) {
   const { refreshCartFromSQL } = useContext(CartContext) || {};
   
-  // 🔘 Local states for real-time button transition, quantities, and cart badge count
   const [quantities, setQuantities] = useState<{ [key: string]: number }>({});
   const [animatingButtons, setAnimatingButtons] = useState<{ [key: string]: boolean }>({});
   const [cartBadgeCount, setCartBadgeCount] = useState<number>(0);
 
-  // 🛒 Initial load to fetch current counts from SQLite Database
   useEffect(() => {
     fetchCurrentCartStatus();
   }, []);
@@ -64,17 +106,14 @@ export default function RawChickenScreen({ navigation }: any) {
     }
   };
 
-  // ➕ PLUS / FIRST TIME ADD HANDLER
   const handleAddToCart = async (product: any) => {
     const currentQty = quantities[product.id] || 0;
     const nextQty = currentQty + 1;
 
     try {
-      // If it's the first time adding (quantity is 0), trigger the background flash color animation
       if (currentQty === 0) {
         setAnimatingButtons(prev => ({ ...prev, [product.id]: true }));
         
-        // Button state transition delay (1.2 seconds) to reveal the minus/plus structure nicely
         setTimeout(() => {
           setAnimatingButtons(prev => ({ ...prev, [product.id]: false }));
         }, 1200);
@@ -91,7 +130,6 @@ export default function RawChickenScreen({ navigation }: any) {
         );
       }
 
-      // Update local UI states safely
       setQuantities(prev => ({ ...prev, [product.id]: nextQty }));
       setCartBadgeCount(prev => prev + 1);
 
@@ -101,7 +139,6 @@ export default function RawChickenScreen({ navigation }: any) {
     }
   };
 
-  // ➖ MINUS HANDLER
   const handleRemoveFromCart = async (product: any) => {
     const currentQty = quantities[product.id] || 0;
     if (currentQty <= 0) return;
@@ -211,12 +248,10 @@ export default function RawChickenScreen({ navigation }: any) {
                     
                     {/* DYNAMIC TRANSFORMING BUTTON PORTION */}
                     {isAnimating ? (
-                      // 1st Stage: Solid Background Text Fill State
                       <View style={styles.animatingButtonBlock}>
                         <Text style={styles.animatingButtonText}>ADDED</Text>
                       </View>
                     ) : qty > 0 ? (
-                      // 2nd Stage: Modern Increment Quantity Control Component
                       <View style={styles.quantityContainer}>
                         <TouchableOpacity style={styles.qtyControlBtn} onPress={() => handleRemoveFromCart(product)}>
                           <Icon name="remove" size={14} color="#B31942" style={styles.boldIcon} />
@@ -227,7 +262,6 @@ export default function RawChickenScreen({ navigation }: any) {
                         </TouchableOpacity>
                       </View>
                     ) : (
-                      // Standard Initial Setup State
                       <TouchableOpacity 
                         style={styles.addButton}
                         activeOpacity={0.7}
@@ -317,15 +351,12 @@ const styles = StyleSheet.create({
   currentPrice: { fontSize: 16, fontWeight: 'bold', color: '#1A202C' },
   oldPrice: { fontSize: 11, color: '#A0AEC0', textDecorationLine: 'line-through', marginTop: 1 },
   
-  // ADD BUTTON ORIGINAL
   addButton: { borderWidth: 1, borderColor: '#B31942', paddingVertical: 5, paddingHorizontal: 16, borderRadius: 6, backgroundColor: '#FFF', minWidth: 65, alignItems: 'center' },
   addButtonText: { color: '#B31942', fontWeight: 'bold', fontSize: 12 },
 
-  // STAGE 1 FULL COLORED TRANSITION STYLE
   animatingButtonBlock: { backgroundColor: '#B31942', paddingVertical: 5, paddingHorizontal: 10, borderRadius: 6, minWidth: 65, alignItems: 'center', justifyContent: 'center' },
   animatingButtonText: { color: '#FFF', fontWeight: 'bold', fontSize: 11, letterSpacing: 0.5 },
 
-  // STAGE 2 MULTI-QUANTITY WRAPPER
   quantityContainer: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#B31942', borderRadius: 6, backgroundColor: '#FFF0F2', height: 28, overflow: 'hidden' },
   qtyControlBtn: { paddingHorizontal: 8, height: '100%', justifyContent: 'center', alignItems: 'center' },
   qtyCountLabel: { fontSize: 13, fontWeight: 'bold', color: '#B31942', paddingHorizontal: 4, minWidth: 16, textAlign: 'center' },
@@ -336,7 +367,6 @@ const styles = StyleSheet.create({
   tabLabel: { fontSize: 11, color: '#718096', marginTop: 4, fontWeight: '600' },
   activeTabLabel: { fontSize: 11, color: '#B31942', marginTop: 4, fontWeight: '600' },
 
-  // NOTIFICATION BADGE GRAPHIC LAYER
   cartIconWrapper: { position: 'relative', padding: 2 },
   badgeNotificationBubble: { position: 'absolute', top: -5, right: -8, backgroundColor: '#E53E3E', borderRadius: 9, minWidth: 16, height: 16, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 3 },
   badgeText: { color: '#FFF', fontSize: 9, fontWeight: 'bold', textAlign: 'center' }

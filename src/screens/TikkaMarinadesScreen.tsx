@@ -27,17 +27,59 @@ const TIKKA_PRODUCTS = [
     targetScreen: 'TikkaMarinadesDetail', 
     description: 'Perfect spicy marinade blend for chicken tikka.',
   },
+  {
+    id: 'tk3',
+    name: 'Tandoori Angara Chicken Tikka',
+    weight: '165g',
+    price: '950',
+    oldPrice: '1100',
+    discount: '13% OFF',
+    image: require('../assets/image/TandooriAngaraChickenTikka.jpeg'), 
+    targetScreen: 'TandooriAngaraChickenTikkaDetail', 
+    description: 'Fiery and smoky charcoal-style hot tandoori marinated tikka.',
+  },
+  {
+    id: 'tk4',
+    name: 'Super Pudina Chicken Tikka',
+    weight: '165g',
+    price: '880',
+    oldPrice: '1000',
+    discount: '12% OFF',
+    image: require('../assets/image/SuperPudinaChickenTikka.jpeg'), 
+    targetScreen: 'SuperPudinaChickenTikkaDetail', 
+    description: 'Refreshing mint and coriander infused green garden marinade.',
+  },
+  {
+    id: 'tk5',
+    name: 'Cheesy Italiano Chicken Tikka',
+    weight: '165g',
+    price: '990',
+    oldPrice: '1200',
+    discount: '17% OFF',
+    image: require('../assets/image/CheesyItalinoChickenTikka.jpeg'), 
+    targetScreen: 'CheesyItalianoChickenTikkaDetail', 
+    description: 'Creamy rich cheese blend with subtle Italian herbs coding.',
+  },
+  {
+    id: 'tk6',
+    name: 'Chinese Dragon Chicken Tikka',
+    weight: '165g',
+    price: '920',
+    oldPrice: '1050',
+    discount: '12% OFF',
+    image: require('../assets/image/ChineseDragonChickenTikka.jpeg'), 
+    targetScreen: 'ChineseDragonChickenTikkaDetail', 
+    description: 'Spicy Indo-Chinese dark soy and schezwan twisted chicken tikka.',
+  },
 ];
 
 export default function TikkaMarinadesScreen({ navigation }: any) {
   const { refreshCartFromSQL } = useContext(CartContext) || {};
   
-  // 🔘 Local states for animation flash, dynamic quantities mapping, and live bottom badge counter
   const [quantities, setQuantities] = useState<{ [key: string]: number }>({});
   const [animatingButtons, setAnimatingButtons] = useState<{ [key: string]: boolean }>({});
   const [cartBadgeCount, setCartBadgeCount] = useState<number>(0);
 
-  // 🛒 Initial lifecycle execution to keep UI state consistent with SQLite records
   useEffect(() => {
     fetchCurrentCartStatus();
   }, []);
@@ -64,13 +106,11 @@ export default function TikkaMarinadesScreen({ navigation }: any) {
     }
   };
 
-  // ➕ PLUS / INITIAL ADD ENGINE CALL
   const handleAddToCart = async (product: any) => {
     const currentQty = quantities[product.id] || 0;
     const nextQty = currentQty + 1;
 
     try {
-      // Background solid fill flash transition trigger for 1.2 seconds if adding fresh item
       if (currentQty === 0) {
         setAnimatingButtons(prev => ({ ...prev, [product.id]: true }));
         setTimeout(() => {
@@ -89,7 +129,6 @@ export default function TikkaMarinadesScreen({ navigation }: any) {
         );
       }
 
-      // Live reactive local tracking update
       setQuantities(prev => ({ ...prev, [product.id]: nextQty }));
       setCartBadgeCount(prev => prev + 1);
 
@@ -99,7 +138,6 @@ export default function TikkaMarinadesScreen({ navigation }: any) {
     }
   };
 
-  // ➖ MINUS DECREMENT ENGINE CALL
   const handleRemoveFromCart = async (product: any) => {
     const currentQty = quantities[product.id] || 0;
     if (currentQty <= 0) return;
@@ -183,7 +221,6 @@ export default function TikkaMarinadesScreen({ navigation }: any) {
             return (
               <View key={product.id} style={styles.productCard}>
                 
-                {/* Upper Clickable Block for info navigation */}
                 <TouchableOpacity 
                   activeOpacity={0.9}
                   onPress={() => navigation.navigate(product.targetScreen)}
@@ -200,7 +237,7 @@ export default function TikkaMarinadesScreen({ navigation }: any) {
                   </View>
                 </TouchableOpacity>
                 
-                {/* Lower Action Row (Strictly isolated from main navigation touch) */}
+                {/* Lower Action Row */}
                 <View style={styles.productBottomActionBlock}>
                   <View style={styles.priceActionRow}>
                     <View>
